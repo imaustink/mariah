@@ -1,0 +1,47 @@
+{
+  "name": "pilsner",
+  "description": "A light-weight, fast, and modular solution for modern front-end applications.",
+  "version": "0.0.0-alpha.1",
+  "author": {
+    "name": "Austin Kurpuis",
+    "email": "austin@austinkurpuis.com",
+    "url": "https://www.austinkurpuis.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/imaustink/pilsner/issues"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "fixpack": "^2.3.1",
+    "jest": "^23.3.0",
+    "standard": "^11.0.1"
+  },
+  "homepage": "https://github.com/imaustink/pilsner#readme",
+  "keywords": [
+    "bindings",
+    "components",
+    "framework",
+    "front-end",
+    "observable",
+    "reactive",
+    "web"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imaustink/pilsner.git"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "standard": {
+    "ignore": [],
+    "parser": "babel-eslint",
+    "env": {
+      "browser": true,
+      "jest": true
+    }
+  }
+}
