@@ -3,6 +3,8 @@ import { EventEmitter } from '../src/event-emitter'
 test('should emit event to handler', () => {
   const e = new EventEmitter()
 
+  expect.assertions(3);
+
   e.on('foo', (arg0, arg1, arg2) => {
     expect(arg0).toBe(0)
     expect(arg1).toBe(1)
@@ -17,6 +19,8 @@ test('should unbind handler', () => {
   const handler = () => {
     throw new Error('should be unbound')
   }
+
+  expect.assertions(1)
 
   e.on('foo', handler)
   e.on('foo', (ev) => expect(ev).toEqual({}))
