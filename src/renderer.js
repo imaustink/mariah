@@ -14,12 +14,27 @@ export const directives = {
 
     }
   },
-  on (element, key, value, scope) {
-
+  on (element, name, key, scope) {
+    const value = scope[key]
+    addEventListener(element, name, function (event) {
+      if (typeof value === 'function') {
+        value(event)
+      }
+    })
   }
 }
 
 export const nodeBindings = new Map()
+
+export function addEventListener (element, name, handler) {
+  element.addEventListener(name, handler)
+
+  registerBinding(element, {
+    teardown () {
+      element.removeEventListener(name, handler)
+    }
+  })
+}
 
 export function registerBinding (node, binding) {
   const bindings = nodeBindings.get(node)
@@ -105,39 +120,34 @@ export function createLiveElement (tagName, attributes, scope) {
 // Breaks up a string where variables are found and replace them with live bound text nodes
 export function createLiveTextFragment (content, scope) {
   const fragment = document.createDocumentFragment()
-  let currentVariable
 
-  // eslint-disable-next-line no-cond-assign
-  while (currentVariable = MAGIC_TAGS_REGEXP.exec(content, 'gm')) {
-    if (currentVariable) {
-      const staringIndex = currentVariable.index
-      const outerWidth = currentVariable[0].length
-      const name = currentVariable[1]
-      const value = scope[name]
-      const prefix = content.slice(0, staringIndex)
-      const liveNode = document.createTextNode(value)
-      content = content.slice(staringIndex + outerWidth)
+  enumerateMustacheValues(content, (startingIndex, outerWidth, name) => {
+    const value = scope[name]
+    const prefix = content.slice(0, startingIndex)
+    const liveNode = document.createTextNode(value)
+    content = content.slice(startingIndex + outerWidth)
 
-      if (prefix.length > 1) {
-        fragment.appendChild(document.createTextNode(prefix))
-      }
-      fragment.appendChild(liveNode)
-
-      const binding = new Binding({
-        child: liveNode,
-        property: 'nodeValue'
-      },
-      {
-        parent: scope,
-        property: name
-      },
-      {
-        type: 'from'
-      })
-
-      registerBinding(liveNode, binding)
+    if (prefix.length > 1) {
+      fragment.appendChild(document.createTextNode(prefix))
     }
-  }
+    fragment.appendChild(liveNode)
+
+    const binding = new Binding({
+      child: liveNode,
+      property: 'nodeValue'
+    },
+    {
+      parent: scope,
+      property: name
+    },
+    {
+      type: 'from'
+    })
+
+    registerBinding(liveNode, binding)
+
+    return content
+  })
 
   if (content) {
     fragment.appendChild(document.createTextNode(content))
@@ -160,7 +170,7 @@ export function bindPropertyOrAttribute (element, attributes, scope) {
       const { content, map } = interpolateMustacheValues(attributeValue, scope)
       const binding = new Binding({
         child: {},
-        property (property, value) {
+        property (property) {
           if (map[property]) {
             const { content } = interpolateMustacheValues(attributeValue, scope)
             element.setAttribute(attribute.key, content)

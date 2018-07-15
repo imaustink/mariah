@@ -122,6 +122,8 @@ test('should render live fragment from HTML', () => {
   scope.greeting = 'Hello Everyone'
 
   expect(frag.firstChild.firstChild.firstChild.nodeValue).toBe('Hello Everyone')
+
+  teardownBindings(frag)
 })
 
 test('should create element with live attribute', () => {
@@ -142,4 +144,27 @@ test('should create element with live attribute', () => {
   scope.otherThing = 'world'
 
   expect(div.getAttribute('id')).toBe('hello-world')
+
+  teardownBindings(div)
+})
+
+test('should bind event to handler in scope', () => {
+  expect.assertions(2)
+  const scope = new ObservableObject({
+    handler (event) {
+      expect(event).toBeInstanceOf(Event)
+    }
+  })
+  const button = createLiveElement('button', [
+    {
+      key: 'm-on:click',
+      value: 'handler'
+    }
+  ], scope)
+
+  button.dispatchEvent(new Event('click'))
+
+  teardownBindings(button)
+
+  expect(nodeBindings.size).toBe(0)
 })
