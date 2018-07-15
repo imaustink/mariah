@@ -137,4 +137,9 @@ test('should create element with live attribute', () => {
   scope.otherThing = 'baz'
 
   expect(div.getAttribute('id')).toBe('bar-baz')
+
+  scope.id = 'hello'
+  scope.otherThing = 'world'
+
+  expect(div.getAttribute('id')).toBe('hello-world')
 })

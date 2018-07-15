@@ -156,12 +156,15 @@ export function bindPropertyOrAttribute (element, attributes, scope) {
         directive(element, keyParts[1], attribute.value, scope)
       }
     } else if (attribute.value) {
-      const interpolation = new InterpolateMustacheValues(attribute.value, scope)
+      const attributeValue = attribute.value
+      const { content, map } = interpolateMustacheValues(attributeValue, scope)
       const binding = new Binding({
         child: {},
         property (property, value) {
-          interpolation.updateValue(property, value)
-          element.setAttribute(attribute.key, interpolation.value)
+          if (map[property]) {
+            const { content } = interpolateMustacheValues(attributeValue, scope)
+            element.setAttribute(attribute.key, content)
+          }
         }
       },
       {
@@ -173,46 +176,36 @@ export function bindPropertyOrAttribute (element, attributes, scope) {
       })
 
       registerBinding(element, binding)
-      element.setAttribute(attribute.key, interpolation.value)
+      element.setAttribute(attribute.key, content)
     }
   }
 }
 
-export class InterpolateMustacheValues {
-  constructor (string, data) {
-    let currentVariable
+export function enumerateMustacheValues (content, callback) {
+  const map = {}
+  let currentVariable
 
-    // eslint-disable-next-line no-cond-assign
-    while (currentVariable = MAGIC_TAGS_REGEXP.exec(string, 'gm')) {
-      if (currentVariable) {
-        const start = currentVariable.index
-        const outerWidth = currentVariable[0].length
-        const name = currentVariable[1]
-        const value = data[name]
-        const length = value.length
-        this.positions[name] = {
-          start,
-          length
-        }
-        string = spliceString(string, start, outerWidth, value)
-      }
+  // eslint-disable-next-line no-cond-assign
+  while (currentVariable = MAGIC_TAGS_REGEXP.exec(content, 'gm')) {
+    if (currentVariable) {
+      const staringIndex = currentVariable.index
+      const outerWidth = currentVariable[0].length
+      const name = currentVariable[1]
+
+      content = callback(staringIndex, outerWidth, name)
+      map[name] = true
     }
-    this.value = string
   }
 
-  updateValue (property, value) {
-    const position = this.positions[property]
-    if (position) {
-      this.value = spliceString(this.value, position.start, position.length, value)
-      console.log(this.value)
-      position.length = value.length
-    }
-    return this.string
-  }
+  return map
+}
 
-  positions = {}
-
-  value = ''
+export function interpolateMustacheValues (content, data) {
+  const map = enumerateMustacheValues(content, (startingIndex, outerWidth, name) => {
+    content = spliceString(content, startingIndex, outerWidth, data[name])
+    return content
+  })
+  return { content, map }
 }
 
 export function spliceString (string, start, length, value) {
