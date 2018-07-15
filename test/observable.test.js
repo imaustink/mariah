@@ -1,4 +1,4 @@
-import { ObservableObject, ObservableArray } from '../src/observable'
+import { ObservableObject, ObservableArray } from '../src/observables'
 
 test('should be instance of Object', () => {
   const m = new ObservableObject()

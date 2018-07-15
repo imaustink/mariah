@@ -11,6 +11,7 @@
     "url": "https://github.com/imaustink/pilsner/issues"
   },
   "devDependencies": {
+    "@skatejs/ssr": "^0.19.6",
     "babel-eslint": "^8.2.5",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.7.0",
@@ -44,5 +45,8 @@
       "browser": true,
       "jest": true
     }
+  },
+  "jest": {
+    "testEnvironment": "@skatejs/ssr/jest"
   }
 }
