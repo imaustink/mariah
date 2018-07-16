@@ -1,6 +1,6 @@
 import {
   renderFragmentFromHTML,
-  createLiveElement,
+  createElement,
   createLiveTextFragment,
   teardownBindings,
   removeNode,
@@ -36,7 +36,7 @@ test('should create simple text node', () => {
 })
 
 test('should create native element', () => {
-  const p = createLiveElement('p')
+  const p = createElement('p')
 
   expect(p).toBeInstanceOf(HTMLElement)
   expect(p.tagName).toBe('P')
@@ -49,7 +49,7 @@ test('should create custom element', () => {
 
   customElements.define('test-component', TestComponent)
 
-  const ce = createLiveElement('test-component')
+  const ce = createElement('test-component')
 
   expect(ce).toBeInstanceOf(TestComponent)
 })
@@ -79,8 +79,8 @@ test('should teardown child text node bindings on removal', () => {
 
 test('should teardown deeply nested bindings', () => {
   const scope = new ObservableObject({ foo: 'bar', baz: 'qux' })
-  const p = createLiveElement('p')
-  const subP = createLiveElement('p')
+  const p = createElement('p')
+  const subP = createElement('p')
 
   p.appendChild(createLiveTextFragment('{{foo}}', scope))
   p.appendChild(subP)
@@ -181,4 +181,48 @@ test('should conditionally render child', () => {
   expect(frag.firstChild.textContent).toBe('Hello World!')
 
   teardownBindings(frag)
+})
+
+test('should render live list from Array of Objects', () => {
+  const scope = new ObservableObject({
+    items: [
+      {
+        name: 'bar'
+      },
+      {
+        name: 'baz'
+      }
+    ]
+  })
+  const frag = renderFragmentFromHTML(
+    '<ul><li m-for="items" id="item-{{$index}}">{{name}}</li></il>',
+    scope
+  )
+  let firstLI = frag.firstChild.firstChild
+
+  expect(firstLI.getAttribute('id')).toBe('item-0')
+  expect(firstLI.textContent).toBe('bar')
+  expect(firstLI.nextSibling.getAttribute('id')).toBe('item-1')
+  expect(firstLI.nextSibling.textContent).toBe('baz')
+
+  scope.items.push({name: 'qux'})
+
+  expect(firstLI.getAttribute('id')).toBe('item-0')
+  expect(firstLI.textContent).toBe('bar')
+  expect(firstLI.nextSibling.getAttribute('id')).toBe('item-1')
+  expect(firstLI.nextSibling.textContent).toBe('baz')
+  expect(frag.firstChild.lastChild.getAttribute('id')).toBe('item-2')
+  expect(frag.firstChild.lastChild.textContent).toBe('qux')
+
+  scope.items.unshift({name: 'foo'})
+  firstLI = frag.firstChild.firstChild
+
+  expect(firstLI.getAttribute('id')).toBe('item-0')
+  expect(firstLI.textContent).toBe('foo')
+  expect(firstLI.nextSibling.getAttribute('id')).toBe('item-1')
+  expect(firstLI.nextSibling.textContent).toBe('bar')
+  expect(firstLI.nextSibling.nextSibling.getAttribute('id')).toBe('item-2')
+  expect(firstLI.nextSibling.nextSibling.textContent).toBe('baz')
+  expect(firstLI.nextSibling.nextSibling.nextSibling.getAttribute('id')).toBe('item-3')
+  expect(firstLI.nextSibling.nextSibling.nextSibling.textContent).toBe('qux')
 })

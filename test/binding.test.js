@@ -72,7 +72,7 @@ test('should emit changes from parent and child', () => {
 
   expect.assertions(6)
 
-  child.on('change', (prop, val) => {
+  child.on('change', (event, prop, val) => {
     expect(prop).toBe('foo')
     expect(val).toBe(childChanges.shift())
   })
@@ -82,7 +82,7 @@ test('should emit changes from parent and child', () => {
     { parent, property: 'bar' },
     { type: 'bind' }
   )
-  parent.on('change', (prop, val) => {
+  parent.on('change', (event, prop, val) => {
     expect(prop).toBe('bar')
     expect(val).toBe(false)
   })

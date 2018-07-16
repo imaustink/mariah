@@ -16,12 +16,12 @@ export class Binding {
 
   bind (source, sourceProperty, target, targetProperty, initialize) {
     const isCustomHandler = typeof targetProperty === 'function'
-    const handler = (isCustomHandler && targetProperty) || (value => {
+    const handler = (isCustomHandler && targetProperty) || ((event, value) => {
       target[targetProperty] = value
     })
 
     if (initialize) {
-      handler(source[sourceProperty], target[targetProperty])
+      handler(null, source[sourceProperty], target[targetProperty])
     }
     source.on(sourceProperty, handler)
 

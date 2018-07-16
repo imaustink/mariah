@@ -1,6 +1,8 @@
 import { parse } from 'himalaya'
 import { Component } from './component'
 import { Binding } from './binding'
+import { logger } from './logger'
+import { ObservableObject } from './observables'
 
 export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
 
@@ -25,7 +27,7 @@ export const directives = {
   },
   if (targetElement, _, scopeKey, scope) {
     const placeholder = document.createTextNode('')
-    const update = (value) => {
+    function update (value) {
       if (value) {
         targetElement.parentNode.replaceChild(targetElement, placeholder)
       } else {
@@ -45,6 +47,36 @@ export const directives = {
     })
 
     registerBinding(targetElement, binding)
+  },
+  for (targetElement, _, scopeKey, scope) {
+    const itemMap = new Map()
+    const value = scope[scopeKey]
+    const parent = targetElement.parentNode
+
+    parent.removeChild(targetElement)
+
+    function add (item, index) {
+      if (itemMap.has(item)) {
+
+      } else {
+        itemMap.set(
+          item,
+          value
+        )
+      }
+    }
+
+    if (Array.isArray(value)) {
+      for (let i = 0; i < value.length; i++) {
+        add(value[i], i)
+      }
+    } else if (typeof value === 'object') {
+      for (let key in value) {
+        if (value.hasOwnProperty(key)) {
+          add(value[key], key)
+        }
+      }
+    }
   }
 }
 
@@ -95,32 +127,44 @@ export function renderFragmentFromHTML (template, viewModel) {
 }
 
 // Render from a DOM AST
-export function renderFragmentFromAST (ast, scope) {
-  const fragment = document.createDocumentFragment()
+export function renderFragmentFromAST (ast, scope, parent = document.createDocumentFragment()) {
   for (let i = 0; i < ast.length; i++) {
     const nodeInfo = ast[i]
-    let node
 
     switch (nodeInfo.type) {
       case 'element':
-        node = createLiveElement(nodeInfo.tagName, scope)
+        let element = createElement(nodeInfo.tagName)
+
+        parent.appendChild(element)
+
+        if (nodeInfo.attributes && nodeInfo.attributes.length) {
+          // TODO: building my own parser would mean I could avoid things like this
+          const attributes = convertAttributesListToMap(nodeInfo.attributes)
+          setupLiveElementBindings(element, attributes, scope)
+        }
         if (nodeInfo.children.length) {
-          node.appendChild(renderFragmentFromAST(nodeInfo.children, scope))
+          element.appendChild(renderFragmentFromAST(nodeInfo.children, scope, parent))
         }
         break
       case 'text':
-        node = createLiveTextFragment(nodeInfo.content, scope)
+        const node = createLiveTextFragment(nodeInfo.content, scope)
+        parent.appendChild(node)
         break
-    }
-
-    fragment.appendChild(node)
-
-    if (nodeInfo.attributes && nodeInfo.attributes.length) {
-      bindPropertyOrAttribute(node, nodeInfo.attributes, scope)
     }
   }
 
-  return fragment
+  return parent
+}
+
+export function convertAttributesListToMap (attributes) {
+  const map = {}
+
+  for (let i = 0; i < attributes.length; i++) {
+    let attribute = attributes[i]
+    map[attribute.key] = attribute.value
+  }
+
+  return map
 }
 
 // Remove a node and cleanup any bindings on it
@@ -130,7 +174,7 @@ export function removeNode (node) {
 }
 
 // Create an element and setup binding to a scope
-export function createLiveElement (tagName, attributes, scope) {
+export function createElement (tagName) {
   const node = document.createElement(tagName)
 
   if (node instanceof Component) {
@@ -179,14 +223,33 @@ export function createLiveTextFragment (content, scope) {
   return fragment
 }
 
-export function bindPropertyOrAttribute (element, attributes, scope) {
+export function setupLiveElementBindings (element, attributes, scope) {
+  const uniqueDirectivesUsed = {
+    if: false,
+    for: false
+  }
+
+  if (attributes[`${DIRECTIVE_PREFIX}for`]) {
+    const key = attributes[`${DIRECTIVE_PREFIX}for`]
+    delete attributes[`${DIRECTIVE_PREFIX}for`]
+    directives.for(element, attributes, key, scope)
+  }
+
   for (let i = 0; i < attributes.length; i++) {
     const attribute = attributes[i]
     if (attribute.key.startsWith(DIRECTIVE_PREFIX)) {
       const keyParts = attribute.key.slice(2).split(':')
-      const directive = directives[keyParts[0]]
+      const directiveName = keyParts[0]
+      const directiveValue = keyParts[1]
+      const directive = directives[directiveName]
+      if (uniqueDirectivesUsed[directiveName]) {
+        throw new Error(`Conflicting directive found ${attribute.key}="${attribute.value}"!`)
+      }
       if (typeof directive === 'function') {
-        directive(element, keyParts[1], attribute.value, scope)
+        directive(element, directiveValue, attribute.value, scope)
+        if (uniqueDirectivesUsed[directiveName] === false) {
+          uniqueDirectivesUsed[directiveName] = true
+        }
       }
     } else if (attribute.value) {
       const attributeValue = attribute.value
