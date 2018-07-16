@@ -128,10 +128,8 @@ test('should render live fragment from HTML', () => {
 
 test('should create element with live attribute', () => {
   const scope = new ObservableObject({ id: 'foo', otherThing: 'bar' })
-  const div = createLiveElement('div', [{
-    key: 'id',
-    value: '{{id}}-{{otherThing}}'
-  }], scope)
+  const div = renderFragmentFromHTML('<div id="{{id}}-{{otherThing}}"></div>', scope)
+    .firstChild
 
   expect(div.getAttribute('id')).toBe('foo-bar')
 
@@ -155,16 +153,32 @@ test('should bind event to handler in scope', () => {
       expect(event).toBeInstanceOf(Event)
     }
   })
-  const button = createLiveElement('button', [
-    {
-      key: 'm-on:click',
-      value: 'handler'
-    }
-  ], scope)
+  const button = renderFragmentFromHTML('<button m-on:click="handler"></button>', scope)
+    .firstChild
 
   button.dispatchEvent(new Event('click'))
 
   teardownBindings(button)
 
   expect(nodeBindings.size).toBe(0)
+})
+
+test('should conditionally render child', () => {
+  const scope = new ObservableObject({ shown: true })
+  const frag = renderFragmentFromHTML('<div m-if="shown">Hello World!</div>', scope)
+
+  expect(frag.firstChild.nodeType).toBe(Node.ELEMENT_NODE)
+  expect(frag.firstChild.textContent).toBe('Hello World!')
+
+  scope.shown = false
+
+  expect(frag.firstChild.nodeType).toBe(Node.TEXT_NODE)
+  expect(frag.firstChild.textContent).toBe('')
+
+  scope.shown = true
+
+  expect(frag.firstChild.nodeType).toBe(Node.ELEMENT_NODE)
+  expect(frag.firstChild.textContent).toBe('Hello World!')
+
+  teardownBindings(frag)
 })

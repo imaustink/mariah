@@ -7,20 +7,44 @@ export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
 export const DIRECTIVE_PREFIX = 'm-'
 
 export const directives = {
-  bind (element, key, value, scope) {
-    if (element._vm) {
+  bind (targetElement, childProp, parentProp, scope) {
+    // TODO setup bindings from scope to the custom element's VM here
+    if (targetElement._vm) {
 
     } else {
 
     }
   },
-  on (element, name, key, scope) {
-    const value = scope[key]
-    addEventListener(element, name, function (event) {
+  on (targetElement, eventName, scopeKey, scope) {
+    const value = scope[scopeKey]
+    addEventListener(targetElement, eventName, function (event) {
       if (typeof value === 'function') {
         value(event)
       }
     })
+  },
+  if (targetElement, _, scopeKey, scope) {
+    const placeholder = document.createTextNode('')
+    const update = (value) => {
+      if (value) {
+        targetElement.parentNode.replaceChild(targetElement, placeholder)
+      } else {
+        targetElement.parentNode.replaceChild(placeholder, targetElement)
+      }
+    }
+    const binding = new Binding({
+      child: {},
+      property: update
+    },
+    {
+      parent: scope,
+      property: scopeKey
+    },
+    {
+      type: 'from'
+    })
+
+    registerBinding(targetElement, binding)
   }
 }
 
@@ -79,7 +103,7 @@ export function renderFragmentFromAST (ast, scope) {
 
     switch (nodeInfo.type) {
       case 'element':
-        node = createLiveElement(nodeInfo.tagName, nodeInfo.attributes, scope)
+        node = createLiveElement(nodeInfo.tagName, scope)
         if (nodeInfo.children.length) {
           node.appendChild(renderFragmentFromAST(nodeInfo.children, scope))
         }
@@ -90,6 +114,10 @@ export function renderFragmentFromAST (ast, scope) {
     }
 
     fragment.appendChild(node)
+
+    if (nodeInfo.attributes && nodeInfo.attributes.length) {
+      bindPropertyOrAttribute(node, nodeInfo.attributes, scope)
+    }
   }
 
   return fragment
@@ -106,12 +134,7 @@ export function createLiveElement (tagName, attributes, scope) {
   const node = document.createElement(tagName)
 
   if (node instanceof Component) {
-    // TODO setup bindings from scope to the custom element's VM here
     node.appendChild(renderFragmentFromHTML(node.template, node._vm))
-  }
-
-  if (attributes && attributes.length) {
-    bindPropertyOrAttribute(node, attributes, scope)
   }
 
   return node
