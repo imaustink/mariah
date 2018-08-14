@@ -1,8 +1,6 @@
 import { parse } from 'himalaya'
 import { Component } from './component'
 import { Binding } from './binding'
-import { logger } from './logger'
-import { ObservableObject } from './observables'
 
 export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
 
@@ -27,9 +25,13 @@ export const directives = {
   },
   if (targetElement, _, scopeKey, scope) {
     const placeholder = document.createTextNode('')
-    function update (value) {
+    const frag = document.createDocumentFragment()
+
+    frag.appendChild(placeholder)
+
+    function update (event, value) {
       if (value) {
-        targetElement.parentNode.replaceChild(targetElement, placeholder)
+        placeholder.parentNode.replaceChild(targetElement, placeholder)
       } else {
         targetElement.parentNode.replaceChild(placeholder, targetElement)
       }
@@ -47,22 +49,53 @@ export const directives = {
     })
 
     registerBinding(targetElement, binding)
+
+    return frag
   },
-  for (targetElement, _, scopeKey, scope) {
-    const itemMap = new Map()
+  for (nodeInfo, scopeKey, scope) {
+    const elementMap = new Map()
+    const indexMap = {}
     const value = scope[scopeKey]
-    const parent = targetElement.parentNode
+    const frag = document.createDocumentFragment()
+    const placeholder = document.createTextNode('')
 
-    parent.removeChild(targetElement)
+    frag.appendChild(placeholder)
 
-    function add (item, index) {
-      if (itemMap.has(item)) {
+    function getParent () {
+      return placeholder.parentNode
+    }
 
+    function add (value, index) {
+      const element = renderFragmentFromAST([nodeInfo], value).firstChild
+
+      if (indexMap[index]) {
+        const currentElement = indexMap[index]
+        elementMap.delete(currentElement)
+        elementMap.set(element, index)
+        indexMap[index] = element
+        getParent().replaceChild(element, currentElement)
+        teardownBindings(currentElement)
       } else {
-        itemMap.set(
-          item,
-          value
-        )
+        elementMap.set(element, index)
+        indexMap[index] = element
+        // TODO this needs to be fixed for objects to work
+        getParent().appendChild(element)
+      }
+    }
+
+    function remove (index) {
+      const element = indexMap[index]
+      if (element) {
+        removeNode(element)
+        // TODO this needs to be fixed for objects to work
+        while (indexMap[index]) {
+          const nextElement = indexMap[index + 1]
+          indexMap[index] = nextElement
+          if (nextElement) {
+            elementMap.set(nextElement, index)
+          }
+          index++
+        }
       }
     }
 
@@ -77,6 +110,19 @@ export const directives = {
         }
       }
     }
+
+    value.on('change', (event, property, value) => {
+      if (event.type === 'set') {
+        add(value, property)
+      } else if (event.type === 'delete') {
+        remove(property)
+      }
+    })
+
+    return frag
+
+    // TODO: Register binding to parent
+    // Need to improve Binding before this is possible
   }
 }
 
@@ -133,17 +179,12 @@ export function renderFragmentFromAST (ast, scope, parent = document.createDocum
 
     switch (nodeInfo.type) {
       case 'element':
-        let element = createElement(nodeInfo.tagName)
+        let element = createElementFromAST(nodeInfo, scope)
 
         parent.appendChild(element)
 
-        if (nodeInfo.attributes && nodeInfo.attributes.length) {
-          // TODO: building my own parser would mean I could avoid things like this
-          const attributes = convertAttributesListToMap(nodeInfo.attributes)
-          setupLiveElementBindings(element, attributes, scope)
-        }
         if (nodeInfo.children.length) {
-          element.appendChild(renderFragmentFromAST(nodeInfo.children, scope, parent))
+          element.appendChild(renderFragmentFromAST(nodeInfo.children, scope))
         }
         break
       case 'text':
@@ -174,8 +215,8 @@ export function removeNode (node) {
 }
 
 // Create an element and setup binding to a scope
-export function createElement (tagName) {
-  const node = document.createElement(tagName)
+export function createElementFromAST (nodeInfo, scope) {
+  const node = createLiveElement(nodeInfo, scope)
 
   if (node instanceof Component) {
     node.appendChild(renderFragmentFromHTML(node.template, node._vm))
@@ -223,17 +264,20 @@ export function createLiveTextFragment (content, scope) {
   return fragment
 }
 
-export function setupLiveElementBindings (element, attributes, scope) {
-  const uniqueDirectivesUsed = {
-    if: false,
-    for: false
+export function createLiveElement (nodeInfo, scope) {
+  // TODO: render children
+  const { tagName, attributes, children } = nodeInfo
+  // TODO: this is slow, building my own parser would mean I could avoid things like this
+  const forDirectiveIndex = attributes.findIndex(attribute => attribute.key === `${DIRECTIVE_PREFIX}for`)
+
+  if (forDirectiveIndex !== -1) {
+    const scopeKey = attributes[forDirectiveIndex].value
+    attributes.splice(forDirectiveIndex, 1)
+    return directives.for(nodeInfo, scopeKey, scope)
   }
 
-  if (attributes[`${DIRECTIVE_PREFIX}for`]) {
-    const key = attributes[`${DIRECTIVE_PREFIX}for`]
-    delete attributes[`${DIRECTIVE_PREFIX}for`]
-    directives.for(element, attributes, key, scope)
-  }
+  // Should pass nodeInfo to directives
+  const element = document.createElement(tagName)
 
   for (let i = 0; i < attributes.length; i++) {
     const attribute = attributes[i]
@@ -242,21 +286,15 @@ export function setupLiveElementBindings (element, attributes, scope) {
       const directiveName = keyParts[0]
       const directiveValue = keyParts[1]
       const directive = directives[directiveName]
-      if (uniqueDirectivesUsed[directiveName]) {
-        throw new Error(`Conflicting directive found ${attribute.key}="${attribute.value}"!`)
-      }
       if (typeof directive === 'function') {
         directive(element, directiveValue, attribute.value, scope)
-        if (uniqueDirectivesUsed[directiveName] === false) {
-          uniqueDirectivesUsed[directiveName] = true
-        }
       }
     } else if (attribute.value) {
       const attributeValue = attribute.value
       const { content, map } = interpolateMustacheValues(attributeValue, scope)
       const binding = new Binding({
         child: {},
-        property (property) {
+        property (event, property) {
           if (map[property]) {
             const { content } = interpolateMustacheValues(attributeValue, scope)
             element.setAttribute(attribute.key, content)
@@ -275,6 +313,8 @@ export function setupLiveElementBindings (element, attributes, scope) {
       element.setAttribute(attribute.key, content)
     }
   }
+
+  return element
 }
 
 export function enumerateMustacheValues (content, callback) {

@@ -1,4 +1,7 @@
 import { EventEmitter } from './event-emitter'
+import { isObservableSymbol } from './symbols'
+
+// TODO: use revocable proxies
 
 export class ObservableObject extends EventEmitter {
   // Using the Object constructor because of an issue in @skatejs/ssr (skatejs/skatejs#1464)
@@ -28,7 +31,8 @@ export class ObservableObject extends EventEmitter {
         if (property === '_data') {
           return this._data
         }
-        return Reflect.get(...arguments)
+
+        return getAndHydrate(...arguments)
       },
       deleteProperty (target, property) {
         const lastValue = target[property]
@@ -74,7 +78,8 @@ export class ObservableArray extends EventEmitter {
         if (property === '_data') {
           return this._data
         }
-        return Reflect.get(...arguments)
+
+        return getAndHydrate(...arguments)
       },
       deleteProperty (target, property) {
         const lastValue = target[property]
@@ -87,4 +92,18 @@ export class ObservableArray extends EventEmitter {
     })
     return this._proxy
   }
+}
+
+export function getAndHydrate (target, property) {
+  let value = Reflect.get(...arguments)
+  if (typeof value === 'object' && !value[isObservableSymbol]) {
+    if (Array.isArray(value)) {
+      value = new ObservableArray(value)
+    } else {
+      value = new ObservableObject(value)
+    }
+    value[isObservableSymbol] = true
+    target[property] = value
+  }
+  return value
 }

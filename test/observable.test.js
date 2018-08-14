@@ -1,4 +1,5 @@
 import { ObservableObject, ObservableArray } from '../src/observables'
+import { isObservableSymbol } from '../src/symbols'
 
 test('should be instance of Object', () => {
   const m = new ObservableObject()
@@ -141,4 +142,27 @@ test('should emit list property changes to handler when deleted', () => {
   l.splice(1, 1)
   l.splice(0, 1)
   delete l.foo
+})
+
+test('should hydrate nested options on get', () => {
+  const m = new ObservableObject({
+    childList: [
+      {
+        name: 'foo'
+      },
+      {
+        name: 'bar'
+      },
+      {
+        name: 'baz'
+      }
+    ],
+    childMap: {
+      message: 'Hello World!'
+    }
+  })
+
+  expect(m.childList[isObservableSymbol]).toBe(true)
+  expect(m.childMap[isObservableSymbol]).toBe(true)
+  expect(m.childList[0][isObservableSymbol]).toBe(true)
 })
