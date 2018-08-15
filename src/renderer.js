@@ -25,9 +25,13 @@ export const directives = {
   },
   if (targetElement, _, scopeKey, scope) {
     const placeholder = document.createTextNode('')
-    const update = (value) => {
+    const frag = document.createDocumentFragment()
+
+    frag.appendChild(placeholder)
+
+    function update (event, value) {
       if (value) {
-        targetElement.parentNode.replaceChild(targetElement, placeholder)
+        placeholder.parentNode.replaceChild(targetElement, placeholder)
       } else {
         targetElement.parentNode.replaceChild(placeholder, targetElement)
       }
@@ -45,6 +49,80 @@ export const directives = {
     })
 
     registerBinding(targetElement, binding)
+
+    return frag
+  },
+  for (nodeInfo, scopeKey, scope) {
+    const elementMap = new Map()
+    const indexMap = {}
+    const value = scope[scopeKey]
+    const frag = document.createDocumentFragment()
+    const placeholder = document.createTextNode('')
+
+    frag.appendChild(placeholder)
+
+    function getParent () {
+      return placeholder.parentNode
+    }
+
+    function add (value, index) {
+      const element = renderFragmentFromAST([nodeInfo], value).firstChild
+
+      if (indexMap[index]) {
+        const currentElement = indexMap[index]
+        elementMap.delete(currentElement)
+        elementMap.set(element, index)
+        indexMap[index] = element
+        getParent().replaceChild(element, currentElement)
+        teardownBindings(currentElement)
+      } else {
+        elementMap.set(element, index)
+        indexMap[index] = element
+        // TODO this needs to be fixed for objects to work
+        getParent().appendChild(element)
+      }
+    }
+
+    function remove (index) {
+      const element = indexMap[index]
+      if (element) {
+        removeNode(element)
+        // TODO this needs to be fixed for objects to work
+        while (indexMap[index]) {
+          const nextElement = indexMap[index + 1]
+          indexMap[index] = nextElement
+          if (nextElement) {
+            elementMap.set(nextElement, index)
+          }
+          index++
+        }
+      }
+    }
+
+    if (Array.isArray(value)) {
+      for (let i = 0; i < value.length; i++) {
+        add(value[i], i)
+      }
+    } else if (typeof value === 'object') {
+      for (let key in value) {
+        if (value.hasOwnProperty(key)) {
+          add(value[key], key)
+        }
+      }
+    }
+
+    value.on('change', (event, property, value) => {
+      if (event.type === 'set') {
+        add(value, property)
+      } else if (event.type === 'delete') {
+        remove(property)
+      }
+    })
+
+    return frag
+
+    // TODO: Register binding to parent
+    // Need to improve Binding before this is possible
   }
 }
 
@@ -95,32 +173,39 @@ export function renderFragmentFromHTML (template, viewModel) {
 }
 
 // Render from a DOM AST
-export function renderFragmentFromAST (ast, scope) {
-  const fragment = document.createDocumentFragment()
+export function renderFragmentFromAST (ast, scope, parent = document.createDocumentFragment()) {
   for (let i = 0; i < ast.length; i++) {
     const nodeInfo = ast[i]
-    let node
 
     switch (nodeInfo.type) {
       case 'element':
-        node = createLiveElement(nodeInfo.tagName, scope)
+        let element = createElementFromAST(nodeInfo, scope)
+
+        parent.appendChild(element)
+
         if (nodeInfo.children.length) {
-          node.appendChild(renderFragmentFromAST(nodeInfo.children, scope))
+          element.appendChild(renderFragmentFromAST(nodeInfo.children, scope))
         }
         break
       case 'text':
-        node = createLiveTextFragment(nodeInfo.content, scope)
+        const node = createLiveTextFragment(nodeInfo.content, scope)
+        parent.appendChild(node)
         break
-    }
-
-    fragment.appendChild(node)
-
-    if (nodeInfo.attributes && nodeInfo.attributes.length) {
-      bindPropertyOrAttribute(node, nodeInfo.attributes, scope)
     }
   }
 
-  return fragment
+  return parent
+}
+
+export function convertAttributesListToMap (attributes) {
+  const map = {}
+
+  for (let i = 0; i < attributes.length; i++) {
+    let attribute = attributes[i]
+    map[attribute.key] = attribute.value
+  }
+
+  return map
 }
 
 // Remove a node and cleanup any bindings on it
@@ -130,8 +215,8 @@ export function removeNode (node) {
 }
 
 // Create an element and setup binding to a scope
-export function createLiveElement (tagName, attributes, scope) {
-  const node = document.createElement(tagName)
+export function createElementFromAST (nodeInfo, scope) {
+  const node = createLiveElement(nodeInfo, scope)
 
   if (node instanceof Component) {
     node.appendChild(renderFragmentFromHTML(node.template, node._vm))
@@ -179,21 +264,37 @@ export function createLiveTextFragment (content, scope) {
   return fragment
 }
 
-export function bindPropertyOrAttribute (element, attributes, scope) {
+export function createLiveElement (nodeInfo, scope) {
+  // TODO: render children
+  const { tagName, attributes, children } = nodeInfo
+  // TODO: this is slow, building my own parser would mean I could avoid things like this
+  const forDirectiveIndex = attributes.findIndex(attribute => attribute.key === `${DIRECTIVE_PREFIX}for`)
+
+  if (forDirectiveIndex !== -1) {
+    const scopeKey = attributes[forDirectiveIndex].value
+    attributes.splice(forDirectiveIndex, 1)
+    return directives.for(nodeInfo, scopeKey, scope)
+  }
+
+  // Should pass nodeInfo to directives
+  const element = document.createElement(tagName)
+
   for (let i = 0; i < attributes.length; i++) {
     const attribute = attributes[i]
     if (attribute.key.startsWith(DIRECTIVE_PREFIX)) {
       const keyParts = attribute.key.slice(2).split(':')
-      const directive = directives[keyParts[0]]
+      const directiveName = keyParts[0]
+      const directiveValue = keyParts[1]
+      const directive = directives[directiveName]
       if (typeof directive === 'function') {
-        directive(element, keyParts[1], attribute.value, scope)
+        directive(element, directiveValue, attribute.value, scope)
       }
     } else if (attribute.value) {
       const attributeValue = attribute.value
       const { content, map } = interpolateMustacheValues(attributeValue, scope)
       const binding = new Binding({
         child: {},
-        property (property) {
+        property (event, property) {
           if (map[property]) {
             const { content } = interpolateMustacheValues(attributeValue, scope)
             element.setAttribute(attribute.key, content)
@@ -212,6 +313,8 @@ export function bindPropertyOrAttribute (element, attributes, scope) {
       element.setAttribute(attribute.key, content)
     }
   }
+
+  return element
 }
 
 export function enumerateMustacheValues (content, callback) {

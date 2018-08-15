@@ -1,32 +1,46 @@
 import { EventEmitter } from './event-emitter'
+import { isObservableSymbol } from './symbols'
+
+// TODO: use revocable proxies
 
 export class ObservableObject extends EventEmitter {
-  // Using the object constructor because of an issue in @skatejs/ssr (skatejs/skatejs#1464)
+  // Using the Object constructor because of an issue in @skatejs/ssr (skatejs/skatejs#1464)
   // eslint-disable-next-line no-new-object
   constructor (properties = new Object()) {
     super()
-    const data = Object.assign(properties, {
+    this._data = Object.assign(properties, {
       on: this.on,
       off: this.off,
       emit: this.emit
     })
-    this._proxy = new Proxy(data, {
-      set: (target, property, value) => {
-        if (target[property] !== value) {
-          const lastValue = target[property]
+    this._proxy = new Proxy(this._data, {
+      set (target, property, value) {
+        const lastValue = target[property]
+        let success = true
 
-          target[property] = value
+        if (lastValue !== value) {
+          success = Reflect.set(...arguments)
 
-          target.emit('change', property, value, lastValue)
-          target.emit(property, value, lastValue)
+          target.emit('change', { type: 'set' }, property, value, lastValue)
+          target.emit(property, { type: 'set' }, value, lastValue)
         }
-        return true
+
+        return success
       },
       get (target, property) {
         if (property === '_data') {
-          return data
+          return this._data
         }
-        return target[property]
+
+        return getAndHydrate(...arguments)
+      },
+      deleteProperty (target, property) {
+        const lastValue = target[property]
+
+        target.emit('change', { type: 'delete' }, property, undefined, lastValue)
+        target.emit(property, { type: 'delete' }, undefined, lastValue)
+
+        return Reflect.deleteProperty(...arguments)
       }
     })
 
@@ -35,7 +49,9 @@ export class ObservableObject extends EventEmitter {
 }
 
 export class ObservableArray extends EventEmitter {
-  constructor (initial = []) {
+  // Using the Array constructor because of an issue in @skatejs/ssr (skatejs/skatejs#1464)
+  // eslint-disable-next-line no-array-constructor
+  constructor (initial = new Array()) {
     super()
     this._data = Object.assign(initial, {
       on: this.on.bind(this),
@@ -45,20 +61,49 @@ export class ObservableArray extends EventEmitter {
     this._proxy = new Proxy(this._data, {
       set (target, property, value) {
         const lastValue = target[property]
+        let success = true
 
-        target[property] = value
+        if (lastValue !== value) {
+          success = Reflect.set(...arguments)
 
-        if (property !== 'length') {
-          target.emit('change', property, value, lastValue)
-          target.emit(property, value, lastValue)
+          if (property !== 'length') {
+            target.emit('change', { type: 'set' }, property, value, lastValue)
+            target.emit(property, { type: 'set' }, value, lastValue)
+          }
         }
 
-        return true
+        return success
       },
       get (target, property) {
-        return target[property]
+        if (property === '_data') {
+          return this._data
+        }
+
+        return getAndHydrate(...arguments)
+      },
+      deleteProperty (target, property) {
+        const lastValue = target[property]
+
+        target.emit('change', { type: 'delete' }, property, undefined, lastValue)
+        target.emit(property, { type: 'delete' }, undefined, lastValue)
+
+        return Reflect.deleteProperty(...arguments)
       }
     })
     return this._proxy
   }
+}
+
+export function getAndHydrate (target, property) {
+  let value = Reflect.get(...arguments)
+  if (typeof value === 'object' && !value[isObservableSymbol]) {
+    if (Array.isArray(value)) {
+      value = new ObservableArray(value)
+    } else {
+      value = new ObservableObject(value)
+    }
+    value[isObservableSymbol] = true
+    target[property] = value
+  }
+  return value
 }
