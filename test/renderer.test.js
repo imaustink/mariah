@@ -1,6 +1,7 @@
 import {
-  renderFragmentFromHTML,
-  createElementFromAST,
+  render,
+  renderFragmentFromHTMLString,
+  createLiveElement,
   createLiveTextFragment,
   teardownBindings,
   removeNode,
@@ -9,7 +10,7 @@ import {
 // These DOM helpers are needed because SkateJS doesn't implement them.
 import { getElementsByTagName } from './helpers'
 import { Component } from '../src/component'
-import { ObservableObject, ObservableArray } from '../src/observables'
+import { ObservableObject } from '../src/observables'
 import { Binding } from '../src/binding'
 
 test('should create live text nodes in document fragment', () => {
@@ -38,7 +39,7 @@ test('should create simple text node', () => {
 })
 
 test('should create native element', () => {
-  const p = createElementFromAST({
+  const p = createLiveElement({
     tagName: 'p',
     children: [],
     attributes: []
@@ -55,7 +56,7 @@ test('should create custom element', () => {
 
   customElements.define('test-component', TestComponent)
 
-  const ce = createElementFromAST({
+  const ce = createLiveElement({
     tagName: 'test-component',
     children: [],
     attributes: []
@@ -89,12 +90,12 @@ test('should teardown child text node bindings on removal', () => {
 
 test('should teardown deeply nested bindings', () => {
   const scope = new ObservableObject({ foo: 'bar', baz: 'qux' })
-  const p = createElementFromAST({
+  const p = createLiveElement({
     tagName: 'p',
     children: [],
     attributes: []
   })
-  const subP = createElementFromAST({
+  const subP = createLiveElement({
     tagName: 'p',
     children: [],
     attributes: []
@@ -122,7 +123,7 @@ test('should create a single text nodes', () => {
 })
 
 test('should render simple fragment from HTML', () => {
-  const frag = renderFragmentFromHTML(`<div><p>Hello World</p></div>`)
+  const frag = renderFragmentFromHTMLString(`<div><p>Hello World</p></div>`)
 
   expect(frag.firstChild.tagName).toBe('DIV')
   expect(frag.firstChild.firstChild.tagName).toBe('P')
@@ -131,7 +132,7 @@ test('should render simple fragment from HTML', () => {
 
 test('should render live fragment from HTML', () => {
   const scope = new ObservableObject({ greeting: 'Hello World' })
-  const frag = renderFragmentFromHTML(`<div><p>{{greeting}}</p></div>`, scope)
+  const frag = renderFragmentFromHTMLString(`<div><p>{{greeting}}</p></div>`, scope)
 
   expect(frag.firstChild.tagName).toBe('DIV')
   expect(frag.firstChild.firstChild.tagName).toBe('P')
@@ -146,7 +147,7 @@ test('should render live fragment from HTML', () => {
 
 test('should create element with live attribute', () => {
   const scope = new ObservableObject({ id: 'foo', otherThing: 'bar' })
-  const div = renderFragmentFromHTML('<div id="{{id}}-{{otherThing}}"></div>', scope)
+  const div = renderFragmentFromHTMLString('<div id="{{id}}-{{otherThing}}"></div>', scope)
     .firstChild
 
   expect(div.getAttribute('id')).toBe('foo-bar')
@@ -165,13 +166,14 @@ test('should create element with live attribute', () => {
 })
 
 test('should bind event to handler in scope', () => {
-  expect.assertions(2)
+  expect.assertions(3)
   const scope = new ObservableObject({
     handler (event) {
       expect(event).toBeInstanceOf(Event)
+      expect(this).toBe(scope)
     }
   })
-  const button = renderFragmentFromHTML('<button m-on:click="handler"></button>', scope)
+  const button = renderFragmentFromHTMLString('<button m-on:click="handler"></button>', scope)
     .firstChild
 
   button.dispatchEvent(new Event('click'))
@@ -183,7 +185,7 @@ test('should bind event to handler in scope', () => {
 
 test('should conditionally render child', () => {
   const scope = new ObservableObject({ shown: true })
-  const frag = renderFragmentFromHTML('<div m-if="shown">Hello World!</div>', scope)
+  const frag = renderFragmentFromHTMLString('<div m-if="shown">Hello World!</div>', scope)
 
   expect(frag.firstChild.nodeType).toBe(Node.ELEMENT_NODE)
   expect(frag.firstChild.textContent).toBe('Hello World!')
@@ -215,7 +217,7 @@ test('should render live list from Array of Objects', () => {
       }
     ]
   })
-  const frag = renderFragmentFromHTML(
+  const frag = renderFragmentFromHTMLString(
     '<ul><li m-for="items" id="item-{{$index}}">{{name}}</li></il>',
     scope
   )
@@ -224,4 +226,37 @@ test('should render live list from Array of Objects', () => {
     expect(li.textContent).toBe(scope.items[i].name)
     // expect(li.getAttribute('id')).toBe(`item-${i}`)
   })
+})
+
+test('render template from string', () => {
+  const frag = render('<p></p>', new ObservableObject())
+
+  expect(frag.firstChild.tagName).toBe('P')
+})
+
+test('render template from script tag', () => {
+  const script = document.createElement('script')
+  script.appendChild(document.createTextNode('<p></p>'))
+  const frag = render(script, new ObservableObject())
+
+  expect(frag.firstChild.tagName).toBe('P')
+})
+
+test('two-way bind input value to view model', () => {
+  const scope = new ObservableObject({
+    message: 'foo'
+  })
+  const frag = render(`<input m-bind:value="message">`, scope)
+  const input = frag.firstChild
+
+  expect(input.value).toBe('foo')
+
+  input.value = 'bar'
+  input.dispatchEvent(new Event('input'))
+
+  expect(scope.message).toBe('bar')
+
+  scope.message = 'baz'
+
+  expect(input.value).toBe('baz')
 })

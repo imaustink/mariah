@@ -15,9 +15,15 @@
     "babel-eslint": "^8.2.5",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.7.0",
+    "babel-preset-es2017": "^6.24.1",
     "fixpack": "^2.3.1",
     "jest": "^23.3.0",
-    "standard": "^11.0.1"
+    "standard": "^11.0.1",
+    "steal": "^2.1.2",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.5"
   },
   "homepage": "https://github.com/imaustink/pilsner#readme",
   "keywords": [
@@ -36,7 +42,8 @@
     "url": "git+https://github.com/imaustink/pilsner.git"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build-demo": "webpack"
   },
   "standard": {
     "ignore": [],
