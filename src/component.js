@@ -1,4 +1,6 @@
 import { ObservableObject } from './observables'
+import { render, removeNode } from './renderer'
+import './custom-element-shim'
 
 export class Component extends HTMLElement {
   constructor () {
@@ -7,20 +9,38 @@ export class Component extends HTMLElement {
       throw new Error('Component should be extended with a template instance property or getter!')
     }
   }
-  _vm = new ObservableObject()
+  viewModel = new ObservableObject()
 
-  create ({ tag, viewModel, template }) {
-    if (typeof tag !== 'string' || !tag.contains('-')) {
+  // TODO: consider a decorator for this
+  static create ({ tag, template, viewModel }) {
+    if (typeof tag !== 'string' || !tag.includes('-')) {
       throw new Error('A valid tag must be provided to create a new Component!')
     }
-    if (typeof template !== 'string') {
-      throw new Error('A valid template must be provided to create a new Component!')
-    }
     class CustomComponent extends Component {
-      _vm = new ObservableObject(viewModel)
+      viewModel = new ObservableObject(viewModel)
+      template = template
     }
     customElements.define(tag, CustomComponent)
 
     return CustomComponent
+  }
+
+  childrenConnectedCallback () {}
+
+  connectedCallback () {
+    const connectedCallback = this.viewModel.connectedCallback
+    if (typeof connectedCallback === 'function') {
+      connectedCallback.apply(this, arguments)
+    }
+    this.appendChild(render(this.template, this.viewModel))
+    this.childrenConnectedCallback()
+  }
+
+  disconnectedCallback () {
+    const disconnectedCallback = this.viewModel.disconnectedCallback
+    if (typeof disconnectedCallback === 'function') {
+      disconnectedCallback.apply(this, arguments)
+    }
+    removeNode(this)
   }
 }

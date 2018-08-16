@@ -1,5 +1,4 @@
 import { parse } from 'himalaya'
-import { Component } from './component'
 import { Binding } from './binding'
 
 export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
@@ -7,19 +6,42 @@ export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
 export const DIRECTIVE_PREFIX = 'm-'
 
 export const directives = {
-  bind (targetElement, childProp, parentProp, scope) {
-    // TODO setup bindings from scope to the custom element's VM here
-    if (targetElement._vm) {
-
+  bind (targetElement, childProp, scopeKey, scope) {
+    function updateViewModel () {
+      scope[scopeKey] = targetElement.value
+    }
+    function updateElement (event, value) {
+      targetElement.value = value
+    }
+    if (targetElement.viewModel) {
+      // TODO: setup bindings from scope to the custom element's VM here
     } else {
+      // TODO: implement select, check
+      addEventListener(targetElement, 'input', updateViewModel)
+      if (targetElement.value) {
+        updateViewModel()
+      }
 
+      const binding = new Binding({
+        child: {},
+        property: updateElement
+      },
+      {
+        parent: scope,
+        property: scopeKey
+      },
+      {
+        type: 'from'
+      })
+
+      registerBinding(targetElement, binding)
     }
   },
   on (targetElement, eventName, scopeKey, scope) {
     const value = scope[scopeKey]
     addEventListener(targetElement, eventName, function (event) {
       if (typeof value === 'function') {
-        value(event)
+        value.call(scope, event)
       }
     })
   },
@@ -165,11 +187,21 @@ export function teardownBindings (node) {
   }
 }
 
+export function render (template, scope) {
+  // TODO: should support <template> tags
+  if (typeof template === 'string') {
+    return renderFragmentFromHTMLString(template, scope)
+  }
+  if (template instanceof HTMLElement && template.tagName === 'SCRIPT') {
+    return renderFragmentFromHTMLString(template.textContent, scope)
+  }
+}
+
 // Parse a template into an AST and render it
-export function renderFragmentFromHTML (template, viewModel) {
+export function renderFragmentFromHTMLString (template, scope) {
   const ast = parse(template)
 
-  return renderFragmentFromAST(ast, viewModel)
+  return renderFragmentFromAST(ast, scope)
 }
 
 // Render from a DOM AST
@@ -179,7 +211,7 @@ export function renderFragmentFromAST (ast, scope, parent = document.createDocum
 
     switch (nodeInfo.type) {
       case 'element':
-        let element = createElementFromAST(nodeInfo, scope)
+        let element = createLiveElement(nodeInfo, scope)
 
         parent.appendChild(element)
 
@@ -197,32 +229,10 @@ export function renderFragmentFromAST (ast, scope, parent = document.createDocum
   return parent
 }
 
-export function convertAttributesListToMap (attributes) {
-  const map = {}
-
-  for (let i = 0; i < attributes.length; i++) {
-    let attribute = attributes[i]
-    map[attribute.key] = attribute.value
-  }
-
-  return map
-}
-
 // Remove a node and cleanup any bindings on it
 export function removeNode (node) {
   teardownBindings(node)
   node.remove()
-}
-
-// Create an element and setup binding to a scope
-export function createElementFromAST (nodeInfo, scope) {
-  const node = createLiveElement(nodeInfo, scope)
-
-  if (node instanceof Component) {
-    node.appendChild(renderFragmentFromHTML(node.template, node._vm))
-  }
-
-  return node
 }
 
 // Breaks up a string where variables are found and replace them with live bound text nodes
@@ -265,10 +275,10 @@ export function createLiveTextFragment (content, scope) {
 }
 
 export function createLiveElement (nodeInfo, scope) {
-  // TODO: render children
-  const { tagName, attributes, children } = nodeInfo
+  const { tagName, attributes } = nodeInfo
   // TODO: this is slow, building my own parser would mean I could avoid things like this
-  const forDirectiveIndex = attributes.findIndex(attribute => attribute.key === `${DIRECTIVE_PREFIX}for`)
+  const forDirectiveIndex = attributes
+    .findIndex(attribute => attribute.key === `${DIRECTIVE_PREFIX}for`)
 
   if (forDirectiveIndex !== -1) {
     const scopeKey = attributes[forDirectiveIndex].value
@@ -276,7 +286,7 @@ export function createLiveElement (nodeInfo, scope) {
     return directives.for(nodeInfo, scopeKey, scope)
   }
 
-  // Should pass nodeInfo to directives
+  // TODO: Should pass nodeInfo to all directives
   const element = document.createElement(tagName)
 
   for (let i = 0; i < attributes.length; i++) {
@@ -291,12 +301,17 @@ export function createLiveElement (nodeInfo, scope) {
       }
     } else if (attribute.value) {
       const attributeValue = attribute.value
-      const { content, map } = interpolateMustacheValues(attributeValue, scope)
+      const {
+        content,
+        map
+      } = interpolateMustacheValues(attributeValue, scope)
       const binding = new Binding({
         child: {},
         property (event, property) {
           if (map[property]) {
-            const { content } = interpolateMustacheValues(attributeValue, scope)
+            const {
+              content
+            } = interpolateMustacheValues(attributeValue, scope)
             element.setAttribute(attribute.key, content)
           }
         }
@@ -337,10 +352,12 @@ export function enumerateMustacheValues (content, callback) {
 }
 
 export function interpolateMustacheValues (content, data) {
-  const map = enumerateMustacheValues(content, (startingIndex, outerWidth, name) => {
-    content = spliceString(content, startingIndex, outerWidth, data[name])
-    return content
-  })
+  const map = enumerateMustacheValues(content,
+    (startingIndex, outerWidth, name) => {
+      content = spliceString(content, startingIndex, outerWidth, data[name])
+      return content
+    }
+  )
   return { content, map }
 }
 

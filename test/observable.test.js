@@ -144,7 +144,21 @@ test('should emit list property changes to handler when deleted', () => {
   delete l.foo
 })
 
+test('should emit changes on nested list', () => {
+  expect.assertions(1)
+  const m = new ObservableObject({
+    list: []
+  })
+  m.list.on('change', (event, property, item) => {
+    expect(item.name).toBe('foo')
+  })
+  m.list.push({
+    name: 'foo'
+  })
+})
+
 test('should hydrate nested options on get', () => {
+  expect.assertions(5)
   const m = new ObservableObject({
     childList: [
       {
@@ -162,7 +176,23 @@ test('should hydrate nested options on get', () => {
     }
   })
 
+  m.on('otherChildMap', (event, otherChildMap) => {
+    expect(otherChildMap[isObservableSymbol]).toBe(true)
+  })
+
+  m.childList.on('change', (event, property, value) => {
+    expect(value[isObservableSymbol]).toBe(true)
+  })
+
   expect(m.childList[isObservableSymbol]).toBe(true)
   expect(m.childMap[isObservableSymbol]).toBe(true)
   expect(m.childList[0][isObservableSymbol]).toBe(true)
+
+  m.otherChildMap = {
+    name: 'qux'
+  }
+
+  m.childList.push({
+    name: 'qux'
+  })
 })
