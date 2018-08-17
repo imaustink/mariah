@@ -35,6 +35,23 @@ export class BaseBinding {
   handlers = new Map()
 }
 
+// Recursively traverse the a DOM tree and teardown all bindings
+export function teardownBindings (node) {
+  const bindings = nodeBindings.get(node)
+  const childNodes = node.childNodes
+  if (bindings) {
+    for (let i = 0; i < bindings.length; i++) {
+      bindings[i].teardown()
+    }
+    nodeBindings.delete(node)
+  }
+  if (childNodes && childNodes.length) {
+    for (let i = 0; i < childNodes.length; i++) {
+      teardownBindings(childNodes[i])
+    }
+  }
+}
+
 export class PropertyBinding extends BaseBinding {
   constructor (cc, pc, { type }) {
     super()

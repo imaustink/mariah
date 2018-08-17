@@ -1,5 +1,5 @@
 {
-  "name": "pilsner",
+  "name": "mariah",
   "description": "A light-weight, fast, and modular solution for modern front-end applications.",
   "version": "0.0.0-alpha.1",
   "author": {
@@ -8,7 +8,7 @@
     "url": "https://www.austinkurpuis.com/"
   },
   "bugs": {
-    "url": "https://github.com/imaustink/pilsner/issues"
+    "url": "https://github.com/imaustink/mariah/issues"
   },
   "devDependencies": {
     "@skatejs/ssr": "^0.19.6",
@@ -25,7 +25,7 @@
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.5"
   },
-  "homepage": "https://github.com/imaustink/pilsner#readme",
+  "homepage": "https://github.com/imaustink/mariah#readme",
   "keywords": [
     "bindings",
     "components",
@@ -39,7 +39,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imaustink/pilsner.git"
+    "url": "git+https://github.com/imaustink/mariah.git"
   },
   "scripts": {
     "test": "jest",

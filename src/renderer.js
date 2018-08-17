@@ -1,27 +1,10 @@
 import { parse } from 'himalaya'
-import { PropertyBinding, registerBinding, nodeBindings } from './binding'
+import { PropertyBinding, registerBinding, teardownBindings } from './binding'
 import { directives } from './directives'
 
 export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
 
 export const DIRECTIVE_PREFIX = 'm-'
-
-// Recursively traverse the a DOM tree and teardown all bindings
-export function teardownBindings (node) {
-  const bindings = nodeBindings.get(node)
-  const childNodes = node.childNodes
-  if (bindings) {
-    for (let i = 0; i < bindings.length; i++) {
-      bindings[i].teardown()
-    }
-    nodeBindings.delete(node)
-  }
-  if (childNodes && childNodes.length) {
-    for (let i = 0; i < childNodes.length; i++) {
-      teardownBindings(childNodes[i])
-    }
-  }
-}
 
 export function render (template, scope) {
   // TODO: should support <template> tags
@@ -67,6 +50,7 @@ export function renderFragmentFromAST (ast, scope, parent = document.createDocum
 
 // Remove a node and cleanup any bindings on it
 export function removeNode (node) {
+  // TODO: use MutationObserver instead
   teardownBindings(node)
   node.remove()
 }

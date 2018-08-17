@@ -3,14 +3,13 @@ import {
   renderFragmentFromHTMLString,
   createLiveElement,
   createLiveTextFragment,
-  teardownBindings,
   removeNode
 } from '../src/renderer'
 // These DOM helpers are needed because SkateJS doesn't implement them.
 import { getElementsByTagName } from './helpers'
 import { Component } from '../src/component'
 import { ObservableObject } from '../src/observables'
-import { PropertyBinding, nodeBindings } from '../src/binding'
+import { PropertyBinding, nodeBindings, teardownBindings } from '../src/binding'
 
 test('should create live text nodes in document fragment', () => {
   const scope = new ObservableObject({ bar: 'hello', qux: 'world' })
@@ -202,17 +201,17 @@ test('should conditionally render child', () => {
   teardownBindings(frag)
 })
 
-test.only('should render live list from Array of Objects', () => {
+test('should render live list from Array of Objects', () => {
   const scope = new ObservableObject({
     items: [
-      {
-        name: 'foo'
-      },
       {
         name: 'bar'
       },
       {
         name: 'baz'
+      },
+      {
+        name: 'qux'
       }
     ]
   })
@@ -221,9 +220,64 @@ test.only('should render live list from Array of Objects', () => {
     scope
   )
 
-  getElementsByTagName(frag, 'li').forEach((li, i) => {
+  let nodes = getElementsByTagName(frag, 'li')
+  nodes.forEach((li, i) => {
     expect(li.textContent).toBe(scope.items[i].name)
     expect(li.getAttribute('id')).toBe(`item-${i}`)
+  })
+
+  expect(nodes.length).toBe(3)
+
+  scope.items.push({
+    name: 'foo'
+  })
+
+  nodes = getElementsByTagName(frag, 'li')
+  nodes.forEach((li, i) => {
+    expect(li.textContent).toBe(scope.items[i].name)
+    expect(li.getAttribute('id')).toBe(`item-${i}`)
+  })
+
+  expect(nodes.length).toBe(4)
+})
+
+test('should render live list from Array of Strings', () => {
+  const scope = new ObservableObject({
+    items: ['foo', 'bar', 'baz']
+  })
+  const frag = renderFragmentFromHTMLString(
+    '<ul><li m-for="items">{{$value}}</li></il>',
+    scope
+  )
+
+  getElementsByTagName(frag, 'li').forEach((li, i) => {
+    expect(li.textContent).toBe(scope.items[i])
+  })
+})
+
+test('should render live list from Object of Objects', () => {
+  const scope = new ObservableObject({
+    items: {
+      'first': {
+        name: 'foo'
+      },
+      'second': {
+        name: 'bar'
+      },
+      'third': {
+        name: 'baz'
+      }
+    }
+  })
+  const frag = renderFragmentFromHTMLString(
+    '<ul><li m-for="items" id="{{$index}}">{{name}}</li></il>',
+    scope
+  )
+  const keys = Object.keys(scope.items)
+
+  getElementsByTagName(frag, 'li').forEach((li, i) => {
+    expect(li.textContent).toBe(scope.items[i].name)
+    expect(keys.includes(li.getAttribute('id'))).toBe(true)
   })
 })
 

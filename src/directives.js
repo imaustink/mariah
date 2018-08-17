@@ -1,19 +1,19 @@
-import { PropertyBinding, ObjectBinding, registerBinding, addEventListener } from './binding'
-import { renderFragmentFromAST, teardownBindings, removeNode } from './renderer'
+import { PropertyBinding, ObjectBinding, registerBinding, addEventListener, teardownBindings } from './binding'
+import { renderFragmentFromAST, removeNode } from './renderer'
 import { ObservableObject } from './observables'
 
 export const directives = {
   bind (targetElement, childProp, scopeKey, scope) {
     function updateViewModel () {
-      scope[scopeKey] = targetElement.value
+      scope[scopeKey] = targetElement[childProp]
     }
     function updateElement (event, value) {
-      targetElement.value = value
+      targetElement[childProp] = value
     }
     if (targetElement.viewModel) {
       // TODO: setup bindings from scope to the custom element's VM here
     } else {
-      // TODO: implement select, check
+      // TODO: implement select, check, textarea
       addEventListener(targetElement, 'input', updateViewModel)
       if (targetElement.value) {
         updateViewModel()
@@ -80,30 +80,27 @@ export const directives = {
 
     frag.appendChild(placeholder)
 
-    function getParent () {
-      return placeholder.parentNode
-    }
-
     function add (value, index) {
-      const scope = new ObservableObject({ $index: index })
-      const binding = new ObjectBinding(scope, value, { type: 'from' })
+      const scope = new ObservableObject({ $index: index, $value: value })
       const element = renderFragmentFromAST([nodeInfo], scope).firstChild
+      if (typeof value === 'object') {
+        const binding = new ObjectBinding(scope, value, { type: 'from' })
+        registerBinding(element, binding)
+      }
 
       if (indexMap[index]) {
         const currentElement = indexMap[index]
         elementMap.delete(currentElement)
         elementMap.set(element, index)
         indexMap[index] = element
-        getParent().replaceChild(element, currentElement)
+        placeholder.parentNode.replaceChild(element, currentElement)
         teardownBindings(currentElement)
       } else {
         elementMap.set(element, index)
         indexMap[index] = element
         // TODO this needs to be fixed for objects to work
-        getParent().appendChild(element)
+        placeholder.parentNode.appendChild(element)
       }
-
-      registerBinding(element, binding)
     }
 
     function remove (index) {
@@ -127,9 +124,9 @@ export const directives = {
         add(value[i], i)
       }
     } else if (typeof value === 'object') {
-      for (let key in value) {
+      for (let key in value._data) {
         if (value.hasOwnProperty(key)) {
-          add(value[key], key)
+          add(value._data[key], key)
         }
       }
     }
