@@ -4,14 +4,13 @@ import {
   createLiveElement,
   createLiveTextFragment,
   teardownBindings,
-  removeNode,
-  nodeBindings
+  removeNode
 } from '../src/renderer'
 // These DOM helpers are needed because SkateJS doesn't implement them.
 import { getElementsByTagName } from './helpers'
 import { Component } from '../src/component'
 import { ObservableObject } from '../src/observables'
-import { Binding } from '../src/binding'
+import { PropertyBinding, nodeBindings } from '../src/binding'
 
 test('should create live text nodes in document fragment', () => {
   const scope = new ObservableObject({ bar: 'hello', qux: 'world' })
@@ -70,7 +69,7 @@ test('should teardown text node binding on removal', () => {
   const node = createLiveTextFragment('{{foo}}', scope).firstChild
   const binding = nodeBindings.get(node)
 
-  expect(binding[0]).toBeInstanceOf(Binding)
+  expect(binding[0]).toBeInstanceOf(PropertyBinding)
 
   removeNode(node)
 
@@ -203,7 +202,7 @@ test('should conditionally render child', () => {
   teardownBindings(frag)
 })
 
-test('should render live list from Array of Objects', () => {
+test.only('should render live list from Array of Objects', () => {
   const scope = new ObservableObject({
     items: [
       {
@@ -224,7 +223,7 @@ test('should render live list from Array of Objects', () => {
 
   getElementsByTagName(frag, 'li').forEach((li, i) => {
     expect(li.textContent).toBe(scope.items[i].name)
-    // expect(li.getAttribute('id')).toBe(`item-${i}`)
+    expect(li.getAttribute('id')).toBe(`item-${i}`)
   })
 })
 

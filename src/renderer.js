@@ -1,174 +1,10 @@
 import { parse } from 'himalaya'
-import { Binding } from './binding'
+import { PropertyBinding, registerBinding, nodeBindings } from './binding'
+import { directives } from './directives'
 
 export const MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/
 
 export const DIRECTIVE_PREFIX = 'm-'
-
-export const directives = {
-  bind (targetElement, childProp, scopeKey, scope) {
-    function updateViewModel () {
-      scope[scopeKey] = targetElement.value
-    }
-    function updateElement (event, value) {
-      targetElement.value = value
-    }
-    if (targetElement.viewModel) {
-      // TODO: setup bindings from scope to the custom element's VM here
-    } else {
-      // TODO: implement select, check
-      addEventListener(targetElement, 'input', updateViewModel)
-      if (targetElement.value) {
-        updateViewModel()
-      }
-
-      const binding = new Binding({
-        child: {},
-        property: updateElement
-      },
-      {
-        parent: scope,
-        property: scopeKey
-      },
-      {
-        type: 'from'
-      })
-
-      registerBinding(targetElement, binding)
-    }
-  },
-  on (targetElement, eventName, scopeKey, scope) {
-    const value = scope[scopeKey]
-    addEventListener(targetElement, eventName, function (event) {
-      if (typeof value === 'function') {
-        value.call(scope, event)
-      }
-    })
-  },
-  if (targetElement, _, scopeKey, scope) {
-    const placeholder = document.createTextNode('')
-    const frag = document.createDocumentFragment()
-
-    frag.appendChild(placeholder)
-
-    function update (event, value) {
-      if (value) {
-        placeholder.parentNode.replaceChild(targetElement, placeholder)
-      } else {
-        targetElement.parentNode.replaceChild(placeholder, targetElement)
-      }
-    }
-    const binding = new Binding({
-      child: {},
-      property: update
-    },
-    {
-      parent: scope,
-      property: scopeKey
-    },
-    {
-      type: 'from'
-    })
-
-    registerBinding(targetElement, binding)
-
-    return frag
-  },
-  for (nodeInfo, scopeKey, scope) {
-    const elementMap = new Map()
-    const indexMap = {}
-    const value = scope[scopeKey]
-    const frag = document.createDocumentFragment()
-    const placeholder = document.createTextNode('')
-
-    frag.appendChild(placeholder)
-
-    function getParent () {
-      return placeholder.parentNode
-    }
-
-    function add (value, index) {
-      const element = renderFragmentFromAST([nodeInfo], value).firstChild
-
-      if (indexMap[index]) {
-        const currentElement = indexMap[index]
-        elementMap.delete(currentElement)
-        elementMap.set(element, index)
-        indexMap[index] = element
-        getParent().replaceChild(element, currentElement)
-        teardownBindings(currentElement)
-      } else {
-        elementMap.set(element, index)
-        indexMap[index] = element
-        // TODO this needs to be fixed for objects to work
-        getParent().appendChild(element)
-      }
-    }
-
-    function remove (index) {
-      const element = indexMap[index]
-      if (element) {
-        removeNode(element)
-        // TODO this needs to be fixed for objects to work
-        while (indexMap[index]) {
-          const nextElement = indexMap[index + 1]
-          indexMap[index] = nextElement
-          if (nextElement) {
-            elementMap.set(nextElement, index)
-          }
-          index++
-        }
-      }
-    }
-
-    if (Array.isArray(value)) {
-      for (let i = 0; i < value.length; i++) {
-        add(value[i], i)
-      }
-    } else if (typeof value === 'object') {
-      for (let key in value) {
-        if (value.hasOwnProperty(key)) {
-          add(value[key], key)
-        }
-      }
-    }
-
-    value.on('change', (event, property, value) => {
-      if (event.type === 'set') {
-        add(value, property)
-      } else if (event.type === 'delete') {
-        remove(property)
-      }
-    })
-
-    return frag
-
-    // TODO: Register binding to parent
-    // Need to improve Binding before this is possible
-  }
-}
-
-export const nodeBindings = new Map()
-
-export function addEventListener (element, name, handler) {
-  element.addEventListener(name, handler)
-
-  registerBinding(element, {
-    teardown () {
-      element.removeEventListener(name, handler)
-    }
-  })
-}
-
-export function registerBinding (node, binding) {
-  const bindings = nodeBindings.get(node)
-
-  if (bindings) {
-    bindings.push(binding)
-  } else {
-    nodeBindings.set(node, [binding])
-  }
-}
 
 // Recursively traverse the a DOM tree and teardown all bindings
 export function teardownBindings (node) {
@@ -250,7 +86,7 @@ export function createLiveTextFragment (content, scope) {
     }
     fragment.appendChild(liveNode)
 
-    const binding = new Binding({
+    const binding = new PropertyBinding({
       child: liveNode,
       property: 'nodeValue'
     },
@@ -305,7 +141,7 @@ export function createLiveElement (nodeInfo, scope) {
         content,
         map
       } = interpolateMustacheValues(attributeValue, scope)
-      const binding = new Binding({
+      const binding = new PropertyBinding({
         child: {},
         property (event, property) {
           if (map[property]) {
@@ -351,10 +187,10 @@ export function enumerateMustacheValues (content, callback) {
   return map
 }
 
-export function interpolateMustacheValues (content, data) {
+export function interpolateMustacheValues (content, scope) {
   const map = enumerateMustacheValues(content,
     (startingIndex, outerWidth, name) => {
-      content = spliceString(content, startingIndex, outerWidth, data[name])
+      content = spliceString(content, startingIndex, outerWidth, scope[name])
       return content
     }
   )
