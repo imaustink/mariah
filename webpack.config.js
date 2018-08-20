@@ -3,9 +3,6 @@ const path = require('path')
 module.exports = {
   mode: 'production',
   entry: './demo.js',
-  optimization: {
-    minimize: false
-  },
   output: {
     path: path.resolve(__dirname, 'demos'),
     filename: 'bundle.js'

@@ -2,6 +2,9 @@ import { PropertyBinding, ObjectBinding, registerBinding, addEventListener, tear
 import { renderFragmentFromAST, removeNode } from './renderer'
 import { ObservableObject } from './observables'
 
+const CLASSES_DEF_REGEXP = /,\s?/g
+const CLASS_DEF_REGEXP = /:\s?/
+
 export const directives = {
   bind (targetElement, childProp, scopeKey, scope) {
     function updateViewModel () {
@@ -33,6 +36,64 @@ export const directives = {
 
       registerBinding(targetElement, binding)
     }
+  },
+  attr (targetElement, attributeName, scopeKey, scope) {
+    const binding = new PropertyBinding({
+      child: {},
+      property (event, value) {
+        if (value) {
+          if (typeof value === 'string') {
+            targetElement.setAttribute(attributeName, value)
+          } else {
+            targetElement.setAttribute(attributeName, '')
+          }
+        } else {
+          targetElement.removeAttribute(attributeName)
+        }
+      }
+    },
+    {
+      parent: scope,
+      property: scopeKey
+    },
+    {
+      type: 'from'
+    })
+
+    registerBinding(targetElement, binding)
+  },
+  class (targetElement, _, classes, scope) {
+    const classMap = {}
+    function update (event, property, value) {
+      const className = classMap[property]
+      if (className) {
+        if (value) {
+          targetElement.classList.add(className)
+        } else {
+          targetElement.classList.remove(className)
+        }
+      }
+    }
+    const classDefinitions = classes.split(CLASSES_DEF_REGEXP)
+    for (let i = 0; i < classDefinitions.length; i++) {
+      const [ className, scopeKey ] = classDefinitions[i].split(CLASS_DEF_REGEXP)
+      classMap[scopeKey] = className
+      update(undefined, scopeKey, scope[scopeKey])
+    }
+
+    const binding = new PropertyBinding({
+      child: {},
+      property: update
+    },
+    {
+      parent: scope,
+      property: 'change'
+    },
+    {
+      type: 'from'
+    })
+
+    registerBinding(targetElement, binding)
   },
   on (targetElement, eventName, scopeKey, scope) {
     addEventListener(targetElement, eventName, function (event) {
