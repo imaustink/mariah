@@ -181,6 +181,25 @@ test('should bind event to handler in scope', () => {
   expect(nodeBindings.size).toBe(0)
 })
 
+test('should bind event to handler in parent scope automatically', () => {
+  expect.assertions(3)
+  const scope = new ObservableObject({
+    handler (event, scope) {
+      expect(event).toBeInstanceOf(Event)
+      expect(scope.$value).toBe('foo')
+    },
+    items: ['foo', 'bar']
+  })
+  const frag = renderFragmentFromHTMLString('<button m-for="items" m-on:click="handler"></button>', scope)
+  const [ button ] = getElementsByTagName(frag, 'button')
+
+  button.dispatchEvent(new Event('click'))
+
+  teardownBindings(frag)
+
+  expect(nodeBindings.size).toBe(0)
+})
+
 test('should conditionally render child', () => {
   const scope = new ObservableObject({ shown: true })
   const frag = renderFragmentFromHTMLString('<div m-if="shown">Hello World!</div>', scope)

@@ -196,3 +196,8 @@ test('should hydrate nested options on get', () => {
     name: 'qux'
   })
 })
+
+test('should not define properties that don\'t exist', () => {
+  const m = new ObservableObject()
+  expect(m).not.toHaveProperty('foo')
+})

@@ -35,10 +35,10 @@ export const directives = {
     }
   },
   on (targetElement, eventName, scopeKey, scope) {
-    const value = scope[scopeKey]
     addEventListener(targetElement, eventName, function (event) {
+      const value = scope[scopeKey]
       if (typeof value === 'function') {
-        value.call(scope, event)
+        value.call(scope, event, scope)
       }
     })
   },
@@ -81,12 +81,15 @@ export const directives = {
     frag.appendChild(placeholder)
 
     function add (value, index) {
-      const scope = new ObservableObject({ $index: index, $value: value })
-      const element = renderFragmentFromAST([nodeInfo], scope).firstChild
+      const childScope = new ObservableObject({ $index: index, $value: value })
+      const element = renderFragmentFromAST([nodeInfo], childScope).firstChild
       if (typeof value === 'object') {
-        const binding = new ObjectBinding(scope, value, { type: 'from' })
-        registerBinding(element, binding)
+        const scopedBinding = new ObjectBinding(childScope, value, { type: 'from' })
+        registerBinding(element, scopedBinding)
       }
+      // TODO: this ia a bad and ugly solution. I need something better here
+      const parentBinding = new ObjectBinding(childScope, scope, { type: 'from' })
+      registerBinding(element, parentBinding)
 
       if (indexMap[index]) {
         const currentElement = indexMap[index]

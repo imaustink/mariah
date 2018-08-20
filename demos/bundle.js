@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -150,144 +150,6 @@ function arrayIncludes(array, searchElement, position) {
 "use strict";
 
 
-var _component = __webpack_require__(2);
-
-_component.Component.create({
-  tag: 'my-component',
-  template: '\n    <button m-on:click="toggle">Toggle</button>\n    <input m-bind:value="itemName">\n    <button m-on:click="addItem">Add Item</button>\n    <ul m-if="shown">\n      <li m-for="items">{{name}}</li>\n    </ul>\n  ',
-  viewModel: {
-    shown: true,
-    message: 'Hello World!',
-    items: [],
-    itemName: '',
-    toggle: function toggle() {
-      this.shown = !this.shown;
-    },
-    addItem: function addItem() {
-      this.items.push({
-        name: this.itemName
-      });
-      this.itemName = '';
-    }
-  }
-});
-
-document.body.appendChild(document.createElement('my-component'));
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Component = undefined;
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _observables = __webpack_require__(3);
-
-var _renderer = __webpack_require__(6);
-
-__webpack_require__(14);
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var Component = exports.Component = function (_HTMLElement) {
-  _inherits(Component, _HTMLElement);
-
-  function Component() {
-    _classCallCheck(this, Component);
-
-    var _this = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this));
-
-    _this.viewModel = new _observables.ObservableObject();
-
-    if (_this.template !== undefined) {
-      throw new Error('Component should be extended with a template instance property or getter!');
-    }
-    return _this;
-  }
-
-  _createClass(Component, [{
-    key: 'childrenConnectedCallback',
-    value: function childrenConnectedCallback() {}
-  }, {
-    key: 'connectedCallback',
-    value: function connectedCallback() {
-      var connectedCallback = this.viewModel.connectedCallback;
-      if (typeof connectedCallback === 'function') {
-        connectedCallback.apply(this, arguments);
-      }
-      this.appendChild((0, _renderer.render)(this.template, this.viewModel));
-      this.childrenConnectedCallback();
-    }
-  }, {
-    key: 'disconnectedCallback',
-    value: function disconnectedCallback() {
-      var disconnectedCallback = this.viewModel.disconnectedCallback;
-      if (typeof disconnectedCallback === 'function') {
-        disconnectedCallback.apply(this, arguments);
-      }
-      (0, _renderer.removeNode)(this);
-    }
-  }], [{
-    key: 'create',
-
-
-    // TODO: consider a decorator for this
-    value: function create(_ref) {
-      var tag = _ref.tag,
-          template = _ref.template,
-          viewModel = _ref.viewModel;
-
-      if (typeof tag !== 'string' || !tag.includes('-')) {
-        throw new Error('A valid tag must be provided to create a new Component!');
-      }
-
-      var CustomComponent = function (_Component) {
-        _inherits(CustomComponent, _Component);
-
-        function CustomComponent() {
-          var _ref2;
-
-          var _temp, _this2, _ret;
-
-          _classCallCheck(this, CustomComponent);
-
-          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-          }
-
-          return _ret = (_temp = (_this2 = _possibleConstructorReturn(this, (_ref2 = CustomComponent.__proto__ || Object.getPrototypeOf(CustomComponent)).call.apply(_ref2, [this].concat(args))), _this2), _this2.viewModel = new _observables.ObservableObject(viewModel), _this2.template = template, _temp), _possibleConstructorReturn(_this2, _ret);
-        }
-
-        return CustomComponent;
-      }(Component);
-
-      customElements.define(tag, CustomComponent);
-
-      return CustomComponent;
-    }
-  }]);
-
-  return Component;
-}(HTMLElement);
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -298,9 +160,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 exports.getAndHydrate = getAndHydrate;
 exports.hydrate = hydrate;
 
-var _eventEmitter = __webpack_require__(4);
+var _eventEmitter = __webpack_require__(6);
 
-var _symbols = __webpack_require__(5);
+var _symbols = __webpack_require__(7);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -447,7 +309,7 @@ function hydrate(target, property, value) {
 }
 
 /***/ }),
-/* 4 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -456,74 +318,7 @@ function hydrate(target, property, value) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var EventEmitter = exports.EventEmitter = function EventEmitter() {
-  var _this = this;
-
-  _classCallCheck(this, EventEmitter);
-
-  this.on = function (name, handler) {
-    if (!_this.handlers[name]) {
-      _this.handlers[name] = new Map();
-    }
-    _this.handlers[name].set(handler, handler);
-  };
-
-  this.off = function (name, handler) {
-    var handlers = _this.handlers[name];
-    if (handlers) {
-      handlers.delete(handler);
-    }
-  };
-
-  this.emit = function (name) {
-    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      args[_key - 1] = arguments[_key];
-    }
-
-    var handlers = _this.handlers[name];
-    if (handlers) {
-      handlers.forEach(function (handler) {
-        return handler.apply(undefined, args);
-      });
-    }
-  };
-
-  this.handlers = {};
-};
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var viewModelSymbol = exports.viewModelSymbol = Symbol.for('Mariah.viewModel');
-var isObservableSymbol = exports.isObservableSymbol = Symbol.for('Mariah.isObservable');
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.nodeBindings = exports.directives = exports.DIRECTIVE_PREFIX = exports.MAGIC_TAGS_REGEXP = undefined;
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-exports.addEventListener = addEventListener;
-exports.registerBinding = registerBinding;
-exports.teardownBindings = teardownBindings;
+exports.DIRECTIVE_PREFIX = exports.MAGIC_TAGS_REGEXP = undefined;
 exports.render = render;
 exports.renderFragmentFromHTMLString = renderFragmentFromHTMLString;
 exports.renderFragmentFromAST = renderFragmentFromAST;
@@ -534,191 +329,15 @@ exports.enumerateMustacheValues = enumerateMustacheValues;
 exports.interpolateMustacheValues = interpolateMustacheValues;
 exports.spliceString = spliceString;
 
-var _himalaya = __webpack_require__(7);
+var _himalaya = __webpack_require__(8);
 
-var _binding = __webpack_require__(13);
+var _binding = __webpack_require__(3);
+
+var _directives = __webpack_require__(14);
 
 var MAGIC_TAGS_REGEXP = exports.MAGIC_TAGS_REGEXP = /{{\s*([^}]+)\s*}}/;
 
 var DIRECTIVE_PREFIX = exports.DIRECTIVE_PREFIX = 'm-';
-
-var directives = exports.directives = {
-  bind: function bind(targetElement, childProp, scopeKey, scope) {
-    function updateViewModel() {
-      scope[scopeKey] = targetElement.value;
-    }
-    function updateElement(event, value) {
-      targetElement.value = value;
-    }
-    if (targetElement.viewModel) {
-      // TODO: setup bindings from scope to the custom element's VM here
-    } else {
-      // TODO: implement select, check
-      addEventListener(targetElement, 'input', updateViewModel);
-      if (targetElement.value) {
-        updateViewModel();
-      }
-
-      var binding = new _binding.Binding({
-        child: {},
-        property: updateElement
-      }, {
-        parent: scope,
-        property: scopeKey
-      }, {
-        type: 'from'
-      });
-
-      registerBinding(targetElement, binding);
-    }
-  },
-  on: function on(targetElement, eventName, scopeKey, scope) {
-    var value = scope[scopeKey];
-    addEventListener(targetElement, eventName, function (event) {
-      if (typeof value === 'function') {
-        value.call(scope, event);
-      }
-    });
-  },
-  if: function _if(targetElement, _, scopeKey, scope) {
-    var placeholder = document.createTextNode('');
-    var frag = document.createDocumentFragment();
-
-    frag.appendChild(placeholder);
-
-    function update(event, value) {
-      if (value) {
-        placeholder.parentNode.replaceChild(targetElement, placeholder);
-      } else {
-        targetElement.parentNode.replaceChild(placeholder, targetElement);
-      }
-    }
-    var binding = new _binding.Binding({
-      child: {},
-      property: update
-    }, {
-      parent: scope,
-      property: scopeKey
-    }, {
-      type: 'from'
-    });
-
-    registerBinding(targetElement, binding);
-
-    return frag;
-  },
-  for: function _for(nodeInfo, scopeKey, scope) {
-    var elementMap = new Map();
-    var indexMap = {};
-    var value = scope[scopeKey];
-    var frag = document.createDocumentFragment();
-    var placeholder = document.createTextNode('');
-
-    frag.appendChild(placeholder);
-
-    function getParent() {
-      return placeholder.parentNode;
-    }
-
-    function add(value, index) {
-      var element = renderFragmentFromAST([nodeInfo], value).firstChild;
-
-      if (indexMap[index]) {
-        var currentElement = indexMap[index];
-        elementMap.delete(currentElement);
-        elementMap.set(element, index);
-        indexMap[index] = element;
-        getParent().replaceChild(element, currentElement);
-        teardownBindings(currentElement);
-      } else {
-        elementMap.set(element, index);
-        indexMap[index] = element;
-        // TODO this needs to be fixed for objects to work
-        getParent().appendChild(element);
-      }
-    }
-
-    function remove(index) {
-      var element = indexMap[index];
-      if (element) {
-        removeNode(element);
-        // TODO this needs to be fixed for objects to work
-        while (indexMap[index]) {
-          var nextElement = indexMap[index + 1];
-          indexMap[index] = nextElement;
-          if (nextElement) {
-            elementMap.set(nextElement, index);
-          }
-          index++;
-        }
-      }
-    }
-
-    if (Array.isArray(value)) {
-      for (var i = 0; i < value.length; i++) {
-        add(value[i], i);
-      }
-    } else if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
-      for (var key in value) {
-        if (value.hasOwnProperty(key)) {
-          add(value[key], key);
-        }
-      }
-    }
-
-    value.on('change', function (event, property, value) {
-      if (event.type === 'set') {
-        add(value, property);
-      } else if (event.type === 'delete') {
-        remove(property);
-      }
-    });
-
-    return frag;
-
-    // TODO: Register binding to parent
-    // Need to improve Binding before this is possible
-  }
-};
-
-var nodeBindings = exports.nodeBindings = new Map();
-
-function addEventListener(element, name, handler) {
-  element.addEventListener(name, handler);
-
-  registerBinding(element, {
-    teardown: function teardown() {
-      element.removeEventListener(name, handler);
-    }
-  });
-}
-
-function registerBinding(node, binding) {
-  var bindings = nodeBindings.get(node);
-
-  if (bindings) {
-    bindings.push(binding);
-  } else {
-    nodeBindings.set(node, [binding]);
-  }
-}
-
-// Recursively traverse the a DOM tree and teardown all bindings
-function teardownBindings(node) {
-  var bindings = nodeBindings.get(node);
-  var childNodes = node.childNodes;
-  if (bindings) {
-    for (var i = 0; i < bindings.length; i++) {
-      bindings[i].teardown();
-    }
-    nodeBindings.delete(node);
-  }
-  if (childNodes && childNodes.length) {
-    for (var _i = 0; _i < childNodes.length; _i++) {
-      teardownBindings(childNodes[_i]);
-    }
-  }
-}
 
 function render(template, scope) {
   // TODO: should support <template> tags
@@ -766,7 +385,8 @@ function renderFragmentFromAST(ast, scope) {
 
 // Remove a node and cleanup any bindings on it
 function removeNode(node) {
-  teardownBindings(node);
+  // TODO: use MutationObserver instead
+  (0, _binding.teardownBindings)(node);
   node.remove();
 }
 
@@ -785,7 +405,7 @@ function createLiveTextFragment(content, scope) {
     }
     fragment.appendChild(liveNode);
 
-    var binding = new _binding.Binding({
+    var binding = new _binding.PropertyBinding({
       child: liveNode,
       property: 'nodeValue'
     }, {
@@ -795,7 +415,7 @@ function createLiveTextFragment(content, scope) {
       type: 'from'
     });
 
-    registerBinding(liveNode, binding);
+    (0, _binding.registerBinding)(liveNode, binding);
 
     return content;
   });
@@ -819,7 +439,7 @@ function createLiveElement(nodeInfo, scope) {
   if (forDirectiveIndex !== -1) {
     var scopeKey = attributes[forDirectiveIndex].value;
     attributes.splice(forDirectiveIndex, 1);
-    return directives.for(nodeInfo, scopeKey, scope);
+    return _directives.directives.for(nodeInfo, scopeKey, scope);
   }
 
   // TODO: Should pass nodeInfo to all directives
@@ -831,7 +451,7 @@ function createLiveElement(nodeInfo, scope) {
       var keyParts = attribute.key.slice(2).split(':');
       var directiveName = keyParts[0];
       var directiveValue = keyParts[1];
-      var directive = directives[directiveName];
+      var directive = _directives.directives[directiveName];
       if (typeof directive === 'function') {
         directive(element, directiveValue, attribute.value, scope);
       }
@@ -842,7 +462,7 @@ function createLiveElement(nodeInfo, scope) {
           content = _interpolateMustacheV.content,
           map = _interpolateMustacheV.map;
 
-      var binding = new _binding.Binding({
+      var binding = new _binding.PropertyBinding({
         child: {},
         property: function property(event, _property) {
           if (map[_property]) {
@@ -859,7 +479,7 @@ function createLiveElement(nodeInfo, scope) {
         type: 'from'
       });
 
-      registerBinding(element, binding);
+      (0, _binding.registerBinding)(element, binding);
       element.setAttribute(attribute.key, content);
     }
   };
@@ -890,9 +510,9 @@ function enumerateMustacheValues(content, callback) {
   return map;
 }
 
-function interpolateMustacheValues(content, data) {
+function interpolateMustacheValues(content, scope) {
   var map = enumerateMustacheValues(content, function (startingIndex, outerWidth, name) {
-    content = spliceString(content, startingIndex, outerWidth, data[name]);
+    content = spliceString(content, startingIndex, outerWidth, scope[name]);
     return content;
   });
   return { content: content, map: map };
@@ -903,7 +523,391 @@ function spliceString(string, start, length, value) {
 }
 
 /***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+exports.addEventListener = addEventListener;
+exports.registerBinding = registerBinding;
+exports.teardownBindings = teardownBindings;
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var nodeBindings = exports.nodeBindings = new Map();
+
+function addEventListener(element, name, handler) {
+  element.addEventListener(name, handler);
+
+  registerBinding(element, {
+    teardown: function teardown() {
+      element.removeEventListener(name, handler);
+    }
+  });
+}
+
+function registerBinding(node, binding) {
+  var bindings = nodeBindings.get(node);
+
+  if (bindings) {
+    bindings.push(binding);
+  } else {
+    nodeBindings.set(node, [binding]);
+  }
+}
+
+var BaseBinding = exports.BaseBinding = function () {
+  function BaseBinding() {
+    _classCallCheck(this, BaseBinding);
+
+    this.handlers = new Map();
+  }
+
+  _createClass(BaseBinding, [{
+    key: 'registerHandler',
+    value: function registerHandler(source, handler) {
+      this.handlers.set(source, handler);
+    }
+  }, {
+    key: 'teardown',
+    value: function teardown() {
+      this.handlers.forEach(function (handler, source) {
+        source.off(handler);
+      });
+      this.handlers.clear();
+    }
+  }]);
+
+  return BaseBinding;
+}();
+
+// Recursively traverse the a DOM tree and teardown all bindings
+
+
+function teardownBindings(node) {
+  var bindings = nodeBindings.get(node);
+  var childNodes = node.childNodes;
+  if (bindings) {
+    for (var i = 0; i < bindings.length; i++) {
+      bindings[i].teardown();
+    }
+    nodeBindings.delete(node);
+  }
+  if (childNodes && childNodes.length) {
+    for (var _i = 0; _i < childNodes.length; _i++) {
+      teardownBindings(childNodes[_i]);
+    }
+  }
+}
+
+var PropertyBinding = exports.PropertyBinding = function (_BaseBinding) {
+  _inherits(PropertyBinding, _BaseBinding);
+
+  function PropertyBinding(cc, pc, _ref) {
+    var type = _ref.type;
+
+    _classCallCheck(this, PropertyBinding);
+
+    var _this = _possibleConstructorReturn(this, (PropertyBinding.__proto__ || Object.getPrototypeOf(PropertyBinding)).call(this));
+
+    switch (type) {
+      case 'bind':
+        _this.bind(pc.parent, pc.property, cc.child, cc.property, true);
+        _this.bind(cc.child, cc.property, pc.parent, pc.property);
+        break;
+      case 'to':
+        _this.bind(cc.child, cc.property, pc.parent, pc.property, true);
+        break;
+      case 'from':
+        _this.bind(pc.parent, pc.property, cc.child, cc.property, true);
+        break;
+    }
+    return _this;
+  }
+
+  _createClass(PropertyBinding, [{
+    key: 'bind',
+    value: function bind(source, sourceProperty, target, targetProperty, initialize) {
+      var isCustomHandler = typeof targetProperty === 'function';
+      var handler = isCustomHandler && targetProperty || function (event, value) {
+        target[targetProperty] = value;
+      };
+
+      if (initialize) {
+        handler(null, source[sourceProperty], target[targetProperty]);
+      }
+      source.on(sourceProperty, handler);
+
+      this.registerHandler(source, handler);
+    }
+  }]);
+
+  return PropertyBinding;
+}(BaseBinding);
+
+var ObjectBinding = exports.ObjectBinding = function (_BaseBinding2) {
+  _inherits(ObjectBinding, _BaseBinding2);
+
+  function ObjectBinding(child, parent, _ref2) {
+    var _ref2$type = _ref2.type,
+        type = _ref2$type === undefined ? 'bind' : _ref2$type;
+
+    _classCallCheck(this, ObjectBinding);
+
+    var _this2 = _possibleConstructorReturn(this, (ObjectBinding.__proto__ || Object.getPrototypeOf(ObjectBinding)).call(this));
+
+    switch (type) {
+      case 'bind':
+        _this2.bind(parent, child, true);
+        _this2.bind(child, parent);
+        break;
+      case 'to':
+        _this2.bind(child, parent, true);
+        break;
+      case 'from':
+        _this2.bind(parent, child, true);
+        break;
+    }
+    return _this2;
+  }
+
+  _createClass(ObjectBinding, [{
+    key: 'bind',
+    value: function bind(from, to, initialize) {
+      if (initialize) {
+        Object.assign(to, from);
+      }
+      var handler = function handler(event, property, value) {
+        switch (event.type) {
+          case 'set':
+            to[property] = value;
+            break;
+          case 'delete':
+            delete to[property];
+            break;
+        }
+      };
+      from.on('change', handler);
+
+      this.registerHandler(from, handler);
+    }
+  }]);
+
+  return ObjectBinding;
+}(BaseBinding);
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _component = __webpack_require__(5);
+
+_component.Component.create({
+  tag: 'my-component',
+  template: '\n    <form m-on:submit="addItem">\n      <input m-bind:value="itemName">\n      <button type="submit">Create Todo</button>\n    </form>\n    <ul>\n      <li m-for="items">\n        {{$value}}\n        <button m-on:click="deleteItem">x</button>\n      </li>\n    </ul>\n  ',
+  viewModel: {
+    items: [],
+    itemName: '',
+    addItem: function addItem(event) {
+      event.preventDefault();
+      this.items.push(this.itemName);
+      this.itemName = '';
+    },
+    deleteItem: function deleteItem(_ref, _ref2) {
+      var target = _ref.target;
+      var $index = _ref2.$index;
+
+      this.items.splice($index, 1);
+    }
+  }
+});
+
+document.body.appendChild(document.createElement('my-component'));
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Component = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _observables = __webpack_require__(1);
+
+var _renderer = __webpack_require__(2);
+
+__webpack_require__(15);
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Component = exports.Component = function (_HTMLElement) {
+  _inherits(Component, _HTMLElement);
+
+  function Component() {
+    _classCallCheck(this, Component);
+
+    var _this = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this));
+
+    _this.viewModel = new _observables.ObservableObject();
+
+    if (_this.template !== undefined) {
+      throw new Error('Component should be extended with a template instance property or getter!');
+    }
+    return _this;
+  }
+
+  _createClass(Component, [{
+    key: 'childrenConnectedCallback',
+    value: function childrenConnectedCallback() {}
+  }, {
+    key: 'connectedCallback',
+    value: function connectedCallback() {
+      var connectedCallback = this.viewModel.connectedCallback;
+      if (typeof connectedCallback === 'function') {
+        connectedCallback.apply(this, arguments);
+      }
+      this.appendChild((0, _renderer.render)(this.template, this.viewModel));
+      this.childrenConnectedCallback();
+    }
+  }, {
+    key: 'disconnectedCallback',
+    value: function disconnectedCallback() {
+      var disconnectedCallback = this.viewModel.disconnectedCallback;
+      if (typeof disconnectedCallback === 'function') {
+        disconnectedCallback.apply(this, arguments);
+      }
+      (0, _renderer.removeNode)(this);
+    }
+  }], [{
+    key: 'create',
+
+
+    // TODO: consider a decorator for this
+    value: function create(_ref) {
+      var tag = _ref.tag,
+          template = _ref.template,
+          viewModel = _ref.viewModel;
+
+      if (typeof tag !== 'string' || !tag.includes('-')) {
+        throw new Error('A valid tag must be provided to create a new Component!');
+      }
+
+      var CustomComponent = function (_Component) {
+        _inherits(CustomComponent, _Component);
+
+        function CustomComponent() {
+          var _ref2;
+
+          var _temp, _this2, _ret;
+
+          _classCallCheck(this, CustomComponent);
+
+          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          return _ret = (_temp = (_this2 = _possibleConstructorReturn(this, (_ref2 = CustomComponent.__proto__ || Object.getPrototypeOf(CustomComponent)).call.apply(_ref2, [this].concat(args))), _this2), _this2.viewModel = new _observables.ObservableObject(viewModel), _this2.template = template, _temp), _possibleConstructorReturn(_this2, _ret);
+        }
+
+        return CustomComponent;
+      }(Component);
+
+      customElements.define(tag, CustomComponent);
+
+      return CustomComponent;
+    }
+  }]);
+
+  return Component;
+}(HTMLElement);
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var EventEmitter = exports.EventEmitter = function EventEmitter() {
+  var _this = this;
+
+  _classCallCheck(this, EventEmitter);
+
+  this.on = function (name, handler) {
+    if (!_this.handlers[name]) {
+      _this.handlers[name] = new Map();
+    }
+    _this.handlers[name].set(handler, handler);
+  };
+
+  this.off = function (name, handler) {
+    var handlers = _this.handlers[name];
+    if (handlers) {
+      handlers.delete(handler);
+    }
+  };
+
+  this.emit = function (name) {
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    var handlers = _this.handlers[name];
+    if (handlers) {
+      handlers.forEach(function (handler) {
+        return handler.apply(undefined, args);
+      });
+    }
+  };
+
+  this.handlers = {};
+};
+
+/***/ }),
 /* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var viewModelSymbol = exports.viewModelSymbol = Symbol.for('Mariah.viewModel');
+var isObservableSymbol = exports.isObservableSymbol = Symbol.for('Mariah.isObservable');
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -916,19 +920,19 @@ exports.parseDefaults = undefined;
 exports.parse = parse;
 exports.stringify = stringify;
 
-var _lexer = __webpack_require__(8);
+var _lexer = __webpack_require__(9);
 
 var _lexer2 = _interopRequireDefault(_lexer);
 
-var _parser = __webpack_require__(9);
+var _parser = __webpack_require__(10);
 
 var _parser2 = _interopRequireDefault(_parser);
 
-var _format = __webpack_require__(10);
+var _format = __webpack_require__(11);
 
-var _stringify = __webpack_require__(11);
+var _stringify = __webpack_require__(12);
 
-var _tags = __webpack_require__(12);
+var _tags = __webpack_require__(13);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -957,7 +961,7 @@ function stringify(ast) {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1308,7 +1312,7 @@ function lexSkipTag(tagName, state) {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1464,7 +1468,7 @@ function parse(state) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1521,7 +1525,7 @@ function formatAttributes(attributes) {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1571,7 +1575,7 @@ exports.default = { toHTML: toHTML };
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1619,7 +1623,7 @@ var voidTags = exports.voidTags = ['!doctype', 'area', 'base', 'br', 'col', 'com
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1628,63 +1632,161 @@ var voidTags = exports.voidTags = ['!doctype', 'area', 'base', 'br', 'col', 'com
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.directives = undefined;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _binding = __webpack_require__(3);
 
-var Binding = exports.Binding = function () {
-  function Binding(cc, pc, _ref) {
-    var type = _ref.type;
+var _renderer = __webpack_require__(2);
 
-    _classCallCheck(this, Binding);
+var _observables = __webpack_require__(1);
 
-    this.handlers = new Map();
-
-    switch (type) {
-      case 'bind':
-        this.bind(pc.parent, pc.property, cc.child, cc.property, true);
-        this.bind(cc.child, cc.property, pc.parent, pc.property);
-        break;
-      case 'to':
-        this.bind(cc.child, cc.property, pc.parent, pc.property, true);
-        break;
-      case 'from':
-        this.bind(pc.parent, pc.property, cc.child, cc.property, true);
-        break;
+var directives = exports.directives = {
+  bind: function bind(targetElement, childProp, scopeKey, scope) {
+    function updateViewModel() {
+      scope[scopeKey] = targetElement[childProp];
     }
-  }
-
-  _createClass(Binding, [{
-    key: 'bind',
-    value: function bind(source, sourceProperty, target, targetProperty, initialize) {
-      var isCustomHandler = typeof targetProperty === 'function';
-      var handler = isCustomHandler && targetProperty || function (event, value) {
-        target[targetProperty] = value;
-      };
-
-      if (initialize) {
-        handler(null, source[sourceProperty], target[targetProperty]);
+    function updateElement(event, value) {
+      targetElement[childProp] = value;
+    }
+    if (targetElement.viewModel) {
+      // TODO: setup bindings from scope to the custom element's VM here
+    } else {
+      // TODO: implement select, check, textarea
+      (0, _binding.addEventListener)(targetElement, 'input', updateViewModel);
+      if (targetElement.value) {
+        updateViewModel();
       }
-      source.on(sourceProperty, handler);
 
-      this.handlers.set(source, handler);
-    }
-  }, {
-    key: 'teardown',
-    value: function teardown() {
-      this.handlers.forEach(function (handler, source) {
-        source.off(handler);
+      var binding = new _binding.PropertyBinding({
+        child: {},
+        property: updateElement
+      }, {
+        parent: scope,
+        property: scopeKey
+      }, {
+        type: 'from'
       });
-      this.handlers.clear();
-    }
-  }]);
 
-  return Binding;
-}();
+      (0, _binding.registerBinding)(targetElement, binding);
+    }
+  },
+  on: function on(targetElement, eventName, scopeKey, scope) {
+    (0, _binding.addEventListener)(targetElement, eventName, function (event) {
+      var value = scope[scopeKey];
+      if (typeof value === 'function') {
+        value.call(scope, event, scope);
+      }
+    });
+  },
+  if: function _if(targetElement, _, scopeKey, scope) {
+    var placeholder = document.createTextNode('');
+    var frag = document.createDocumentFragment();
+
+    frag.appendChild(placeholder);
+
+    function update(event, value) {
+      if (value) {
+        placeholder.parentNode.replaceChild(targetElement, placeholder);
+      } else {
+        targetElement.parentNode.replaceChild(placeholder, targetElement);
+      }
+    }
+    var binding = new _binding.PropertyBinding({
+      child: {},
+      property: update
+    }, {
+      parent: scope,
+      property: scopeKey
+    }, {
+      type: 'from'
+    });
+
+    (0, _binding.registerBinding)(targetElement, binding);
+
+    return frag;
+  },
+  for: function _for(nodeInfo, scopeKey, scope) {
+    var elementMap = new Map();
+    var indexMap = {};
+    var value = scope[scopeKey];
+    var frag = document.createDocumentFragment();
+    var placeholder = document.createTextNode('');
+
+    frag.appendChild(placeholder);
+
+    function add(value, index) {
+      var childScope = new _observables.ObservableObject({ $index: index, $value: value });
+      var element = (0, _renderer.renderFragmentFromAST)([nodeInfo], childScope).firstChild;
+      if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
+        var scopedBinding = new _binding.ObjectBinding(childScope, value, { type: 'from' });
+        (0, _binding.registerBinding)(element, scopedBinding);
+      }
+      // TODO: this ia a bad and ugly solution. I need something better here
+      var parentBinding = new _binding.ObjectBinding(childScope, scope, { type: 'from' });
+      (0, _binding.registerBinding)(element, parentBinding);
+
+      if (indexMap[index]) {
+        var currentElement = indexMap[index];
+        elementMap.delete(currentElement);
+        elementMap.set(element, index);
+        indexMap[index] = element;
+        placeholder.parentNode.replaceChild(element, currentElement);
+        (0, _binding.teardownBindings)(currentElement);
+      } else {
+        elementMap.set(element, index);
+        indexMap[index] = element;
+        // TODO this needs to be fixed for objects to work
+        placeholder.parentNode.appendChild(element);
+      }
+    }
+
+    function remove(index) {
+      var element = indexMap[index];
+      if (element) {
+        (0, _renderer.removeNode)(element);
+        // TODO this needs to be fixed for objects to work
+        while (indexMap[index]) {
+          var nextElement = indexMap[index + 1];
+          indexMap[index] = nextElement;
+          if (nextElement) {
+            elementMap.set(nextElement, index);
+          }
+          index++;
+        }
+      }
+    }
+
+    if (Array.isArray(value)) {
+      for (var i = 0; i < value.length; i++) {
+        add(value[i], i);
+      }
+    } else if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
+      for (var key in value._data) {
+        if (value.hasOwnProperty(key)) {
+          add(value._data[key], key);
+        }
+      }
+    }
+
+    value.on('change', function (event, property, value) {
+      if (event.type === 'set') {
+        add(value, property);
+      } else if (event.type === 'delete') {
+        remove(property);
+      }
+    });
+
+    return frag;
+
+    // TODO: Register binding to parent
+    // Need to improve PropertyBinding before this is possible
+  }
+};
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

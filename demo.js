@@ -3,26 +3,27 @@ import { Component } from './src/component'
 Component.create({
   tag: 'my-component',
   template: `
-    <button m-on:click="toggle">Toggle</button>
-    <input m-bind:value="itemName">
-    <button m-on:click="addItem">Add Item</button>
-    <ul m-if="shown">
-      <li m-for="items">{{name}}</li>
+    <form m-on:submit="addItem">
+      <input m-bind:value="itemName">
+      <button type="submit">Create Todo</button>
+    </form>
+    <ul>
+      <li m-for="items">
+        {{$value}}
+        <button m-on:click="deleteItem">x</button>
+      </li>
     </ul>
   `,
   viewModel: {
-    shown: true,
-    message: 'Hello World!',
     items: [],
     itemName: '',
-    toggle () {
-      this.shown = !this.shown
-    },
-    addItem () {
-      this.items.push({
-        name: this.itemName
-      })
+    addItem (event) {
+      event.preventDefault()
+      this.items.push(this.itemName)
       this.itemName = ''
+    },
+    deleteItem (event, { $index }) {
+      this.items.splice($index, 1)
     }
   }
 })
